@@ -97,5 +97,32 @@ describe('Sweet Model', () => {
         }
       }
     });
+
+    it('should validate category is from allowed values', async () => {
+      const testCases = [
+        { category: 'invalid-category', description: 'invalid category' },
+        { category: 'chips', description: 'non-sweet category' },
+        { category: '', description: 'empty category' },
+        { category: 123, description: 'non-string category' }
+      ];
+
+      for (const testCase of testCases) {
+        const sweetData = {
+          name: 'Test Sweet',
+          category: testCase.category,
+          price: 2.50,
+          quantity: 10
+        };
+
+        const sweet = new Sweet(sweetData);
+        
+        try {
+          await sweet.validate();
+          fail(`Should have thrown validation error for ${testCase.description}`);
+        } catch (error) {
+          expect(error.errors.category).toBeDefined();
+        }
+      }
+    });
   });
 });
