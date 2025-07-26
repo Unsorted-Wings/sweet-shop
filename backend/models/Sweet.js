@@ -14,13 +14,6 @@ const sweetSchema = new mongoose.Schema({
       message: 'Name cannot be empty or only whitespace'
     }
   },
-  description: {
-    type: String,
-    required: true,
-    minlength: [10, 'Description must be at least 10 characters long'],
-    maxlength: [500, 'Description must not exceed 500 characters'],
-    trim: true
-  },
   category: {
     type: String,
     required: true,

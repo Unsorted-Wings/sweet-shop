@@ -11,12 +11,11 @@ const router = express.Router();
  */
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { name, description, price, category, quantity } = req.body;
+    const { name, price, category, quantity } = req.body;
 
     // Create new sweet instance
     const sweet = new Sweet({
       name,
-      description,
       price,
       category,
       quantity

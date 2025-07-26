@@ -19,7 +19,6 @@ const mockSweet = jest.fn().mockImplementation((data) => {
   const validationErrors = [];
   
   if (!data.name) validationErrors.push('Name is required');
-  if (!data.description) validationErrors.push('Description is required');
   if (!data.price) validationErrors.push('Price is required');
   if (!data.category) validationErrors.push('Category is required');
   if (data.quantity === undefined) validationErrors.push('Quantity is required');
@@ -106,7 +105,6 @@ describe('Sweet API Endpoints', () => {
   describe('POST /api/sweets', () => {
     const validSweetData = {
       name: 'Chocolate Cake',
-      description: 'Delicious chocolate cake',
       price: 25.99,
       category: 'cake',
       quantity: 10
@@ -175,7 +173,7 @@ describe('Sweet API Endpoints', () => {
     it('should return 400 for missing required fields', async () => {
       const invalidData = {
         name: 'Chocolate Cake',
-        // missing description, price, category, quantity
+        // missing price, category, quantity
       };
 
       const response = await request(app)
