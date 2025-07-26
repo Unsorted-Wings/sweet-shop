@@ -34,9 +34,16 @@ export class AuthController {
     // 2. Save user to database
     // 3. Return the actual user ID
     // For now, return mock success
+
+    const result = await usersCollection.insertOne({
+      email: userData.email,
+      password: userData.password,
+      name: userData.name,
+      role: userData.role || 'customer' // Default role
+    });
     return {
       message: 'User registered successfully',
-      userId: 'user123'
+      userId: result.insertedId.toString()
     };
   }
 }
