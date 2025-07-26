@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import { connectToDatabase } from '../utils/db.js';
 import { validateRegistrationData } from '../utils/validation.js';
 
@@ -29,17 +30,17 @@ export class AuthController {
       throw new ConflictError('User with this email already exists');
     }
 
-    // In a real app, we would:
-    // 1. Hash the password
-    // 2. Save user to database
-    // 3. Return the actual user ID
-    // For now, return mock success
+    // Hash the password
+     const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
 
     const result = await usersCollection.insertOne({
       email: userData.email,
-      password: userData.password,
+      password: hashedPassword,
       name: userData.name,
-      role: userData.role || 'customer' // Default role
+      role: userData.role || 'customer',
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
     return {
       message: 'User registered successfully',
