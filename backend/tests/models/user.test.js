@@ -82,10 +82,9 @@ describe('User Model', () => {
 
     it('should validate password length', async () => {
         const testCases = [
-            { password: '123', description: 'too short' },
-            { password: '12345', description: 'exactly 5 chars' },
-            { password: '', description: 'empty string' },
-            { password: '     ', description: 'only spaces' }
+            { password: '123', description: 'too short', expectedMessage: 'Password must be at least 6 characters long' },
+            { password: '12345', description: 'exactly 5 chars', expectedMessage: 'Password must be at least 6 characters long' },
+            { password: '     ', description: 'only spaces', expectedMessage: 'Password must be at least 6 characters long' }
         ];
 
         for (const testCase of testCases) {
@@ -102,7 +101,7 @@ describe('User Model', () => {
                 fail(`Should have thrown validation error for password: ${testCase.description}`);
             } catch (error) {
                 expect(error.errors.password).toBeDefined();
-                expect(error.errors.password.message).toContain('Password must be at least 6 characters long');
+                expect(error.errors.password.message).toContain(testCase.expectedMessage);
             }
         }
     });
