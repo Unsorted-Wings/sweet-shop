@@ -1,8 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * Sweet Schema - Represents a sweet/candy product in the shop
- */
 const sweetSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -33,7 +30,7 @@ const sweetSchema = new mongoose.Schema({
     }
   }
 }, {
-  timestamps: true // Automatically adds createdAt and updatedAt
+  timestamps: true
 });
 
 export const Sweet = mongoose.model('Sweet', sweetSchema);
