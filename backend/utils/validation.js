@@ -1,29 +1,30 @@
+import { EMAIL_REGEX, VALIDATION_MESSAGES } from '../constants/validation.js';
+
 export function validateEmail(email) {
-  const regularExpression = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regularExpression.test(email);
+  return EMAIL_REGEX.test(email);
 }
 
 export function validateRegistrationData(data) {
   const { email, password, name } = data;
   
   if (!email) {
-    return 'Email is required';
+    return VALIDATION_MESSAGES.EMAIL_REQUIRED;
   }
   
   if (!validateEmail(email)) {
-    return 'Invalid email format';
+    return VALIDATION_MESSAGES.EMAIL_INVALID;
   }
   
   if (!password) {
-    return 'Password is required';
+    return VALIDATION_MESSAGES.PASSWORD_REQUIRED;
   }
   
   if (password.trim().length < 6) {
-    return 'Password must be at least 6 characters long';
+    return VALIDATION_MESSAGES.PASSWORD_TOO_SHORT;
   }
   
   if (!name) {
-    return 'Name is required';
+    return VALIDATION_MESSAGES.NAME_REQUIRED;
   }
   
   return null;

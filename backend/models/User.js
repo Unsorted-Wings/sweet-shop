@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { EMAIL_REGEX, VALIDATION_MESSAGES } from '../constants/validation.js';
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -6,10 +7,9 @@ const userSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: function(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+        return EMAIL_REGEX.test(email);
       },
-      message: 'Invalid email format'
+      message: VALIDATION_MESSAGES.EMAIL_INVALID
     }
   },
   password: {
