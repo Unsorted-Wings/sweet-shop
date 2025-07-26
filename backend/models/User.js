@@ -14,7 +14,13 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    validate: {
+      validator: function(password) {
+        return password.trim().length >= 6;
+      },
+      message: VALIDATION_MESSAGES.PASSWORD_TOO_SHORT
+    }
   },
   name: {
     type: String,
