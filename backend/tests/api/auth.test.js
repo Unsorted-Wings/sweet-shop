@@ -119,4 +119,40 @@ describe('POST /api/auth/register', () => {
       });
     }
   });
+
+  it('should return 400 when password is too weak', async () => {
+    const testCases = [
+      {
+        description: 'password too short (less than 6 characters)',
+        userData: { email: 'test@example.com', password: '123', name: 'Test User' },
+        expectedError: 'Password must be at least 6 characters long'
+      },
+      {
+        description: 'password exactly 5 characters',
+        userData: { email: 'test@example.com', password: '12345', name: 'Test User' },
+        expectedError: 'Password must be at least 6 characters long'
+      },
+      {
+        description: 'empty password string',
+        userData: { email: 'test@example.com', password: '', name: 'Test User' },
+        expectedError: 'Password is required'
+      },
+      {
+        description: 'password with only spaces',
+        userData: { email: 'test@example.com', password: '      ', name: 'Test User' },
+        expectedError: 'Password must be at least 6 characters long'
+      }
+    ];
+
+    for (const testCase of testCases) {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(testCase.userData)
+        .expect(400);
+
+      expect(response.body).toEqual({
+        error: testCase.expectedError
+      });
+    }
+  });
 });
