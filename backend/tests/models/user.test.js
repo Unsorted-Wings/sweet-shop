@@ -129,4 +129,24 @@ describe('User Model', () => {
             }
         }
     });
+
+     it('should accept valid password lengths', async () => {
+        const validPasswords = [
+            'password123',    // exactly 6 chars
+            'verylongpassword', // longer password
+            'pass123!@#'      // with special chars
+        ];
+
+        for (const password of validPasswords) {
+            const userData = {
+                email: 'test@example.com',
+                password: password,
+                name: 'Test User'
+            };
+
+            const user = new User(userData);
+            await expect(user.validate()).resolves.not.toThrow();
+        }
+    });
+
 });
