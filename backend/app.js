@@ -8,6 +8,7 @@ dotenv.config();
 
 // Import serverless functions for testing
 import registerHandler from './api/auth/register.js';
+import loginHandler from './api/auth/login.js';
 
 export function createApp() {
   const app = express();
@@ -51,6 +52,7 @@ export function createApp() {
   
   // Auth routes - mapping to serverless functions
   app.post('/api/auth/register', wrapHandler(registerHandler));
+  app.post('/api/auth/login', wrapHandler(loginHandler));
   
   return app;
 }
