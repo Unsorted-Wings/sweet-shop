@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { it, jest } from '@jest/globals';
 import bcrypt from 'bcrypt';
 
 // Set up test environment
@@ -229,5 +229,15 @@ describe('AuthController', () => {
         .rejects
         .toThrow('Email is required');
     });
+  });
+  it('should reject with ValidationError for missing password', async () => {
+    const loginData = {
+      email: 'test@example.com'
+      // password is missing
+    };
+
+    await expect(authController.loginUser(loginData))
+      .rejects
+      .toThrow('Password is required');
   });
 });
