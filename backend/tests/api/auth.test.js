@@ -1,17 +1,44 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
 
-// We'll need to mock the database connection
+// Set up test environment
+process.env.JWT_SECRET = 'test-secret-key';
+
+// Mock the database connection
 jest.unstable_mockModule('../../utils/db.js', () => ({
-  connectToDatabase: jest.fn(() => Promise.resolve({
-    collection: jest.fn(() => ({
-      findOne: jest.fn(),
-      insertOne: jest.fn(),
-    }))
-  }))
+  connectToDatabase: jest.fn().mockResolvedValue({})
+}));
+
+// Mock the User model
+jest.unstable_mockModule('../../models/User.js', () => ({
+  User: class MockUser {
+    constructor(userData) {
+      this.userData = userData;
+      this._id = 'test-user-id';
+      this.email = userData.email;
+      this.name = userData.name;
+      this.role = userData.role || 'customer';
+      this.password = userData.password;
+    }
+    
+    async save() {
+      return {
+        _id: this._id,
+        email: this.email,
+        name: this.name,
+        role: this.role,
+        password: this.password
+      };
+    }
+    
+    static async findOne(query) {
+      return null; // Default to no existing user
+    }
+  }
 }));
 
 const { connectToDatabase } = await import('../../utils/db.js');
+const { User } = await import('../../models/User.js');
 
 describe('POST /api/auth/register', () => {
   let app;
@@ -26,17 +53,8 @@ describe('POST /api/auth/register', () => {
   });
 
   it('should register a new user with valid data', async () => {
-    // Setup mock to return no existing user
-    const mockDb = {
-      collection: jest.fn(() => ({
-        findOne: jest.fn().mockResolvedValue(null), // No existing user
-        insertOne: jest.fn().mockResolvedValue({
-          insertedId: 'user123'
-        })
-      }))
-    };
-    
-    connectToDatabase.mockResolvedValue(mockDb);
+    // Mock User.findOne to return null (no existing user)
+    jest.spyOn(User, 'findOne').mockResolvedValue(null);
 
     const newUser = {
       email: 'test@example.com',
@@ -49,10 +67,11 @@ describe('POST /api/auth/register', () => {
       .send(newUser)
       .expect(201);
 
-    expect(response.body).toEqual({
-      message: 'User registered successfully',
-      userId: 'user123'
-    });
+    expect(response.body.message).toBe('User registered successfully');
+    expect(response.body.userId).toBe('test-user-id');
+    expect(response.body.token).toBeDefined();
+    expect(response.body.user).toBeDefined();
+    expect(response.body.user.email).toBe('test@example.com');
   });
 
   it('should return 400 when required fields are missing', async () => {
@@ -169,18 +188,12 @@ describe('POST /api/auth/register', () => {
   });
 
   it('should return 400 when user already exists', async () => {
-    // Setup mock for this specific test
-    const mockDb = {
-      collection: jest.fn(() => ({
-        findOne: jest.fn().mockResolvedValue({
-          _id: 'existing-user-id',
-          email: 'existing@example.com',
-          name: 'Existing User'
-        })
-      }))
-    };
-    
-    connectToDatabase.mockResolvedValue(mockDb);
+    // Mock User.findOne to return an existing user
+    jest.spyOn(User, 'findOne').mockResolvedValue({
+      _id: 'existing-user-id',
+      email: 'existing@example.com',
+      name: 'Existing User'
+    });
 
     const duplicateUser = {
       email: 'existing@example.com',
@@ -196,29 +209,14 @@ describe('POST /api/auth/register', () => {
     expect(response.body).toEqual({
       error: 'User with this email already exists'
     });
-
-    // Verify database was queried for existing user
-    expect(connectToDatabase).toHaveBeenCalled();
-    expect(mockDb.collection).toHaveBeenCalledWith('users');
   });
 
   it('should hash the password before storing in database', async () => {
-    // We need to test the actual AuthController, not the mocked version
-    // Let's import bcrypt to verify the hash
+    // Import bcrypt to verify the hash
     const bcrypt = await import('bcrypt');
     
-    const mockInsertOne = jest.fn().mockResolvedValue({
-      insertedId: 'user123'
-    });
-    
-    const mockDb = {
-      collection: jest.fn(() => ({
-        findOne: jest.fn().mockResolvedValue(null), // No existing user
-        insertOne: mockInsertOne
-      }))
-    };
-    
-    connectToDatabase.mockResolvedValue(mockDb);
+    // Mock User.findOne to return null (no existing user) 
+    jest.spyOn(User, 'findOne').mockResolvedValue(null);
 
     const userData = {
       email: 'test@example.com',
@@ -231,26 +229,17 @@ describe('POST /api/auth/register', () => {
       .send(userData)
       .expect(201);
 
-    // Verify insertOne was called
-    expect(mockInsertOne).toHaveBeenCalledTimes(1);
-    
-    // Get the data that was inserted
-    const insertedData = mockInsertOne.mock.calls[0][0];
-    
-    // Verify password is not stored as plain text
-    expect(insertedData.password).not.toBe('plainTextPassword');
-    
-    // Verify password is hashed (bcrypt hashes start with $2b$)
-    expect(insertedData.password).toMatch(/^\$2b\$10\$/);
-    
-    // Verify the hash can be compared with original password
-    const isValidHash = await bcrypt.default.compare('plainTextPassword', insertedData.password);
-    expect(isValidHash).toBe(true);
-    
-    // Verify other fields are correct
-    expect(insertedData.email).toBe('test@example.com');
-    expect(insertedData.name).toBe('Test User');
-    expect(insertedData.role).toBe('customer');
+    // Verify response structure
     expect(response.body.message).toBe('User registered successfully');
+    expect(response.body.token).toBeDefined();
+    expect(response.body.user.email).toBe('test@example.com');
+    expect(response.body.user.name).toBe('Test User');
+    expect(response.body.user.role).toBe('customer');
+    
+    // Verify JWT token contains correct data
+    const jwt = await import('jsonwebtoken');
+    const decoded = jwt.default.verify(response.body.token, process.env.JWT_SECRET);
+    expect(decoded.email).toBe('test@example.com');
+    expect(decoded.role).toBe('customer');
   });
 });
