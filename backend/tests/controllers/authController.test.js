@@ -218,5 +218,16 @@ describe('AuthController', () => {
       // Verify User.findOne was called with correct email
       expect(User.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
     });
+
+    it('should reject with ValidationError for missing email', async () => {
+      const loginData = {
+        password: 'password123'
+        // email is missing
+      };
+
+      await expect(authController.loginUser(loginData))
+        .rejects
+        .toThrow('Email is required');
+    });
   });
 });
