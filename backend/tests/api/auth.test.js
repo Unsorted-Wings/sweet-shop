@@ -155,4 +155,33 @@ describe('POST /api/auth/register', () => {
       });
     }
   });
+
+  it('should return 400 when user already exists', async () => {
+    const mockDb = await connectToDatabase();
+    const mockCollection = mockDb.collection('users');
+    mockCollection.findOne.mockResolvedValue({
+      _id: 'existing-user-id',
+      email: 'existing@example.com',
+      name: 'Existing User'
+    });
+
+    const duplicateUser = {
+      email: 'existing@example.com',
+      password: 'password123',
+      name: 'Test User'
+    };
+
+    const response = await request(app)
+      .post('/api/auth/register')
+      .send(duplicateUser)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      error: 'User with this email already exists'
+    });
+
+    expect(mockCollection.findOne).toHaveBeenCalledWith({
+      email: 'existing@example.com'
+    });
+  });
 });
