@@ -3,7 +3,16 @@ import mongoose from 'mongoose';
 const sweetSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
+    minlength: [2, 'Name must be at least 2 characters long'],
+    maxlength: [100, 'Name must not exceed 100 characters'],
+    trim: true,
+    validate: {
+      validator: function(name) {
+        return name && name.trim().length > 0;
+      },
+      message: 'Name cannot be empty or only whitespace'
+    }
   },
   category: {
     type: String,

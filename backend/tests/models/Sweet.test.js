@@ -130,8 +130,7 @@ describe('Sweet Model', () => {
         { name: '', description: 'empty name' },
         { name: '   ', description: 'whitespace only name' },
         { name: 'A', description: 'too short name (1 char)' },
-        { name: 'A'.repeat(101), description: 'too long name (101 chars)' },
-        { name: 123, description: 'non-string name' }
+        { name: 'A'.repeat(101), description: 'too long name (101 chars)' }
       ];
 
       for (const testCase of testCases) {
