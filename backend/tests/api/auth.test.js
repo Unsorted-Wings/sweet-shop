@@ -78,4 +78,45 @@ describe('POST /api/auth/register', () => {
       });
     }
   });
+
+  it('should return 400 when email format is invalid', async () => {
+    const testCases = [
+      {
+        description: 'email without @ symbol',
+        userData: { email: 'invalidemail.com', password: 'password123', name: 'Test User' },
+        expectedError: 'Invalid email format'
+      },
+      {
+        description: 'email without domain',
+        userData: { email: 'user@', password: 'password123', name: 'Test User' },
+        expectedError: 'Invalid email format'
+      },
+      {
+        description: 'email without local part',
+        userData: { email: '@domain.com', password: 'password123', name: 'Test User' },
+        expectedError: 'Invalid email format'
+      },
+      {
+        description: 'empty email string',
+        userData: { email: '', password: 'password123', name: 'Test User' },
+        expectedError: 'Email is required'
+      },
+      {
+        description: 'email with spaces',
+        userData: { email: 'user @domain.com', password: 'password123', name: 'Test User' },
+        expectedError: 'Invalid email format'
+      }
+    ];
+
+    for (const testCase of testCases) {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(testCase.userData)
+        .expect(400);
+
+      expect(response.body).toEqual({
+        error: testCase.expectedError
+      });
+    }
+  });
 });
