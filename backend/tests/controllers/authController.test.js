@@ -175,5 +175,22 @@ describe('AuthController', () => {
       // Verify User.findOne was called with correct email
       expect(User.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
     });
+
+    it('should reject with AuthenticationError for invalid email', async () => {
+      // Mock User.findOne to return null (user not found)
+      jest.spyOn(User, 'findOne').mockResolvedValue(null);
+
+      const loginData = {
+        email: 'nonexistent@example.com',
+        password: 'password123'
+      };
+
+      await expect(authController.loginUser(loginData))
+        .rejects
+        .toThrow('Invalid email or password');
+      
+      // Verify User.findOne was called with correct email
+      expect(User.findOne).toHaveBeenCalledWith({ email: 'nonexistent@example.com' });
+    });
   });
 });
