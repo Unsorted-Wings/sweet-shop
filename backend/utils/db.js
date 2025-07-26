@@ -6,6 +6,11 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
+const getConnectionOptions = () => ({
+  serverSelectionTimeoutMS: 5000, // 5 second timeout
+  maxPoolSize: 10, // Maximum number of connections
+});
+
 export async function connectToDatabase() {
   if (cached.conn) {
     return cached.conn;
@@ -16,11 +21,7 @@ export async function connectToDatabase() {
   }
 
   if (!cached.promise) {
-    const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    };
-
+    const options = getConnectionOptions();
     cached.promise = mongoose.connect(process.env.MONGODB_URI, options);
   }
 
@@ -29,6 +30,12 @@ export async function connectToDatabase() {
     return cached.conn;
   } catch (error) {
     cached.promise = null;
-    throw error;
+    
+    // Enhance error message with context
+    const enhancedError = new Error(
+      `Failed to connect to MongoDB: ${error.message}`
+    );
+    enhancedError.originalError = error;
+    throw enhancedError;
   }
 }

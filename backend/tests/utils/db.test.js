@@ -31,8 +31,8 @@ describe('connectToDatabase utility', () => {
     expect(mockConnect).toHaveBeenCalledWith(
       'mongodb://localhost:27017/test',
       {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: 10,
       }
     );
     expect(conn).toBe(mockConnection);
