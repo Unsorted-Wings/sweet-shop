@@ -243,3 +243,145 @@ describe('POST /api/auth/register', () => {
     expect(decoded.role).toBe('customer');
   });
 });
+
+describe('POST /api/auth/login', () => {
+  let app;
+  
+  beforeAll(async () => {
+    const { createApp } = await import('../../app.js');
+    app = createApp();
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should login user with valid credentials', async () => {
+    // Import bcrypt to create a proper hash
+    const bcrypt = await import('bcrypt');
+    const hashedPassword = await bcrypt.default.hash('password123', 10);
+    
+    // Mock User.findOne to return a user with hashed password
+    jest.spyOn(User, 'findOne').mockResolvedValue({
+      _id: 'user123',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'customer',
+      password: hashedPassword
+    });
+
+    const loginData = {
+      email: 'test@example.com',
+      password: 'password123'
+    };
+
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send(loginData)
+      .expect(200);
+
+    expect(response.body.message).toBe('Login successful');
+    expect(response.body.token).toBeDefined();
+    expect(response.body.user).toBeDefined();
+    expect(response.body.user.email).toBe('test@example.com');
+    expect(response.body.user.name).toBe('Test User');
+    expect(response.body.user.role).toBe('customer');
+    
+    // Verify JWT token contains correct data
+    const jwt = await import('jsonwebtoken');
+    const decoded = jwt.default.verify(response.body.token, process.env.JWT_SECRET);
+    expect(decoded.userId).toBe('user123');
+    expect(decoded.email).toBe('test@example.com');
+    expect(decoded.role).toBe('customer');
+  });
+
+  it('should return 401 for invalid email', async () => {
+    // Mock User.findOne to return null (user not found)
+    jest.spyOn(User, 'findOne').mockResolvedValue(null);
+
+    const loginData = {
+      email: 'nonexistent@example.com',
+      password: 'password123'
+    };
+
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send(loginData)
+      .expect(401);
+
+    expect(response.body).toEqual({
+      error: 'Invalid email or password'
+    });
+  });
+
+  it('should return 401 for invalid password', async () => {
+    // Import bcrypt to create a proper hash
+    const bcrypt = await import('bcrypt');
+    const hashedPassword = await bcrypt.default.hash('correctPassword', 10);
+    
+    // Mock User.findOne to return a user with different password
+    jest.spyOn(User, 'findOne').mockResolvedValue({
+      _id: 'user123',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'customer',
+      password: hashedPassword
+    });
+
+    const loginData = {
+      email: 'test@example.com',
+      password: 'wrongPassword'
+    };
+
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send(loginData)
+      .expect(401);
+
+    expect(response.body).toEqual({
+      error: 'Invalid email or password'
+    });
+  });
+
+  it('should return 400 for missing email', async () => {
+    const loginData = {
+      password: 'password123'
+      // email is missing
+    };
+
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send(loginData)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      error: 'Email is required'
+    });
+  });
+
+  it('should return 400 for missing password', async () => {
+    const loginData = {
+      email: 'test@example.com'
+      // password is missing
+    };
+
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send(loginData)
+      .expect(400);
+
+    expect(response.body).toEqual({
+      error: 'Password is required'
+    });
+  });
+
+  it('should return 405 for non-POST requests', async () => {
+    const response = await request(app)
+      .get('/api/auth/login')
+      .expect(405);
+
+    expect(response.body).toEqual({
+      error: 'Method not allowed'
+    });
+  });
+});
