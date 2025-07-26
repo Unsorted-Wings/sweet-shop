@@ -1,5 +1,10 @@
 
 import express from 'express';
+import dotenv from 'dotenv';
+import { connectToDatabase } from './utils/db.js';
+
+// Load environment variables
+dotenv.config();
 
 // Import serverless functions for testing
 import registerHandler from './api/auth/register.js';
@@ -9,6 +14,17 @@ export function createApp() {
   
   // Middleware
   app.use(express.json());
+  
+  // Initialize database connection
+  app.use(async (req, res, next) => {
+    try {
+      await connectToDatabase();
+      next();
+    } catch (error) {
+      console.error('Database connection error:', error);
+      res.status(500).json({ error: 'Database connection failed' });
+    }
+  });
   
   // Wrapper function to simulate Vercel's serverless environment
   const wrapHandler = (handler) => async (req, res) => {
