@@ -1,23 +1,26 @@
+function validateRegistrationData(data) {
+  if (!data.email) {    
+    return 'Email is required';
+  }
+  if (!data.password) {
+    return 'Password is required';
+  }
+  if (!data.name) {
+    return 'Name is required';
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { email, password, name } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    const validationError = validateRegistrationData(req.body);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
-    
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
-    }
-    
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-
     res.status(201).json({
       message: 'User registered successfully',
       userId: 'user123'
