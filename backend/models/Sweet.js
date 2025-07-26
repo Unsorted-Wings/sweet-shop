@@ -7,7 +7,11 @@ const sweetSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: true
+    required: true,
+    enum: {
+      values: ['chocolate', 'candy', 'gummy', 'hard-candy', 'lollipop', 'toffee', 'fudge', 'marshmallow'],
+      message: 'Category must be one of: chocolate, candy, gummy, hard-candy, lollipop, toffee, fudge, marshmallow'
+    }
   },
   price: {
     type: Number,
