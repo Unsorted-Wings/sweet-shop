@@ -11,6 +11,9 @@ dotenv.config();
 import registerHandler from './api/auth/register.js';
 import loginHandler from './api/auth/login.js';
 
+// Import route handlers
+import sweetsRouter from './api/sweets.js';
+
 export function createApp() {
   const app = express();
   
@@ -54,6 +57,9 @@ export function createApp() {
   // Auth routes - mapping to serverless functions
   app.post('/api/auth/register', wrapHandler(registerHandler));
   app.post('/api/auth/login', wrapHandler(loginHandler));
+  
+  // Sweet routes
+  app.use('/api/sweets', sweetsRouter);
   
   // Test routes for middleware testing
   app.get('/api/protected/test', authenticateToken, (req, res) => {

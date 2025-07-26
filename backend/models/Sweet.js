@@ -14,12 +14,19 @@ const sweetSchema = new mongoose.Schema({
       message: 'Name cannot be empty or only whitespace'
     }
   },
+  description: {
+    type: String,
+    required: true,
+    minlength: [10, 'Description must be at least 10 characters long'],
+    maxlength: [500, 'Description must not exceed 500 characters'],
+    trim: true
+  },
   category: {
     type: String,
     required: true,
     enum: {
-      values: ['chocolate', 'candy', 'gummy', 'hard-candy', 'lollipop', 'toffee', 'fudge', 'marshmallow'],
-      message: 'Category must be one of: chocolate, candy, gummy, hard-candy, lollipop, toffee, fudge, marshmallow'
+      values: ['chocolate', 'candy', 'gummy', 'hard-candy', 'lollipop', 'toffee', 'fudge', 'marshmallow', 'cake', 'cookie', 'pastry'],
+      message: 'Category must be one of: chocolate, candy, gummy, hard-candy, lollipop, toffee, fudge, marshmallow, cake, cookie, pastry'
     }
   },
   price: {
@@ -47,3 +54,4 @@ const sweetSchema = new mongoose.Schema({
 });
 
 export const Sweet = mongoose.model('Sweet', sweetSchema);
+export default Sweet;

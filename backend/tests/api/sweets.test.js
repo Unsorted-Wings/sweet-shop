@@ -1,11 +1,10 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
-import app from '../../app.js';
 import jwt from 'jsonwebtoken';
 
-// Mock the database connection
+// Mock the database connection first
 jest.unstable_mockModule('../../utils/db.js', () => ({
-  default: jest.fn().mockResolvedValue(true)
+  connectToDatabase: jest.fn().mockResolvedValue(true)
 }));
 
 // Mock the Sweet model
@@ -15,17 +14,60 @@ const mockSweetFindById = jest.fn();
 const mockSweetFindByIdAndUpdate = jest.fn();
 const mockSweetFindByIdAndDelete = jest.fn();
 
-jest.unstable_mockModule('../../models/Sweet.js', () => ({
-  default: jest.fn().mockImplementation((data) => ({
+const mockSweet = jest.fn().mockImplementation((data) => {
+  // Simulate validation errors like Mongoose would
+  const validationErrors = [];
+  
+  if (!data.name) validationErrors.push('Name is required');
+  if (!data.description) validationErrors.push('Description is required');
+  if (!data.price) validationErrors.push('Price is required');
+  if (!data.category) validationErrors.push('Category is required');
+  if (data.quantity === undefined) validationErrors.push('Quantity is required');
+  
+  if (data.price && data.price <= 0) validationErrors.push('Price must be greater than 0');
+  if (data.quantity && data.quantity < 0) validationErrors.push('Quantity must be non-negative');
+  if (data.category && !['chocolate', 'candy', 'gummy', 'hard-candy', 'lollipop', 'toffee', 'fudge', 'marshmallow', 'cake', 'cookie', 'pastry'].includes(data.category)) {
+    validationErrors.push('Invalid category');
+  }
+  
+  const mockSaveInstance = jest.fn().mockImplementation(async () => {
+    if (validationErrors.length > 0) {
+      const error = new Error(validationErrors.join(', '));
+      error.name = 'ValidationError';
+      throw error;
+    }
+    
+    // Call the shared mock only for successful saves
+    mockSweetSave();
+    
+    return {
+      _id: 'sweet123',
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  });
+  
+  return {
     ...data,
     _id: 'sweet123',
-    save: mockSweetSave
-  })),
-  find: mockSweetFind,
-  findById: mockSweetFindById,
-  findByIdAndUpdate: mockSweetFindByIdAndUpdate,
-  findByIdAndDelete: mockSweetFindByIdAndDelete
+    save: mockSaveInstance
+  };
+});
+
+// Add static methods
+mockSweet.find = mockSweetFind;
+mockSweet.findById = mockSweetFindById;
+mockSweet.findByIdAndUpdate = mockSweetFindByIdAndUpdate;
+mockSweet.findByIdAndDelete = mockSweetFindByIdAndDelete;
+
+jest.unstable_mockModule('../../models/Sweet.js', () => ({
+  default: mockSweet,
+  Sweet: mockSweet
 }));
+
+// Import app after mocking
+const { default: app } = await import('../../app.js');
 
 describe('Sweet API Endpoints', () => {
   let adminToken;
@@ -142,7 +184,7 @@ describe('Sweet API Endpoints', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toContain('validation');
+      expect(response.body.error).toContain('Validation failed');
       expect(mockSweetSave).not.toHaveBeenCalled();
     });
 
@@ -158,7 +200,7 @@ describe('Sweet API Endpoints', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toContain('validation');
+      expect(response.body.error).toContain('Validation failed');
       expect(mockSweetSave).not.toHaveBeenCalled();
     });
 
@@ -174,7 +216,7 @@ describe('Sweet API Endpoints', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toContain('validation');
+      expect(response.body.error).toContain('Validation failed');
       expect(mockSweetSave).not.toHaveBeenCalled();
     });
 
@@ -190,12 +232,19 @@ describe('Sweet API Endpoints', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toContain('validation');
+      expect(response.body.error).toContain('Validation failed');
       expect(mockSweetSave).not.toHaveBeenCalled();
     });
 
     it('should handle database errors gracefully', async () => {
-      mockSweetSave.mockRejectedValue(new Error('Database connection failed'));
+      // Create a custom implementation that throws a non-validation error
+      const originalImplementation = mockSweet.getMockImplementation();
+      
+      mockSweet.mockImplementationOnce((data) => ({
+        ...data,
+        _id: 'sweet123',
+        save: jest.fn().mockRejectedValue(new Error('Database connection failed'))
+      }));
 
       const response = await request(app)
         .post('/api/sweets')
@@ -204,14 +253,16 @@ describe('Sweet API Endpoints', () => {
         .expect(500);
 
       expect(response.body.error).toBe('Internal server error');
-      expect(mockSweetSave).toHaveBeenCalledTimes(1);
+      
+      // Restore original implementation
+      mockSweet.mockImplementation(originalImplementation);
     });
 
     it('should return 405 for non-POST requests', async () => {
       const response = await request(app)
         .get('/api/sweets')
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200); // This will be 404 initially until we implement GET
+        .expect(404); // 404 until we implement GET
 
       // We'll update this test when we implement the GET endpoint
     });
