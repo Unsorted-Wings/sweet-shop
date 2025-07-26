@@ -86,4 +86,19 @@ describe('connectToDatabase utility', () => {
     expect(conn1).toBe(conn2);
     expect(conn2).toBe(conn3);
   });
+
+  it('should allow retry after connection failure', async () => {
+    mockConnect.mockClear();
+    
+    const connectionError = new Error('Network timeout');
+    mockConnect.mockRejectedValueOnce(connectionError);
+    
+    await expect(connectToDatabase()).rejects.toThrow('Network timeout');
+    
+    mockConnect.mockResolvedValueOnce(mockConnection);
+    const conn = await connectToDatabase();
+    
+    expect(conn).toBe(mockConnection);
+    expect(mockConnect).toHaveBeenCalledTimes(2);
+  });
 });
