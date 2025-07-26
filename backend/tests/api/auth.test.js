@@ -203,6 +203,10 @@ describe('POST /api/auth/register', () => {
   });
 
   it('should hash the password before storing in database', async () => {
+    // We need to test the actual AuthController, not the mocked version
+    // Let's import bcrypt to verify the hash
+    const bcrypt = await import('bcrypt');
+    
     const mockInsertOne = jest.fn().mockResolvedValue({
       insertedId: 'user123'
     });
@@ -222,7 +226,7 @@ describe('POST /api/auth/register', () => {
       name: 'Test User'
     };
 
-    await request(app)
+    const response = await request(app)
       .post('/api/auth/register')
       .send(userData)
       .expect(201);
@@ -239,9 +243,14 @@ describe('POST /api/auth/register', () => {
     // Verify password is hashed (bcrypt hashes start with $2b$)
     expect(insertedData.password).toMatch(/^\$2b\$10\$/);
     
+    // Verify the hash can be compared with original password
+    const isValidHash = await bcrypt.default.compare('plainTextPassword', insertedData.password);
+    expect(isValidHash).toBe(true);
+    
     // Verify other fields are correct
     expect(insertedData.email).toBe('test@example.com');
     expect(insertedData.name).toBe('Test User');
     expect(insertedData.role).toBe('customer');
+    expect(response.body.message).toBe('User registered successfully');
   });
 });
