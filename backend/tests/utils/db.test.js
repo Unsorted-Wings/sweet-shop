@@ -64,4 +64,11 @@ describe('connectToDatabase utility', () => {
     // Restore the environment variable for other tests
     process.env.MONGODB_URI = originalUri;
   });
+
+  it('should throw an error when mongoose.connect fails', async () => {
+    const connectionError = new Error('Connection failed');
+    mockConnect.mockRejectedValueOnce(connectionError);
+
+    await expect(connectToDatabase()).rejects.toThrow('Connection failed');
+  });
 });
