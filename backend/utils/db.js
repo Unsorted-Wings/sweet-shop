@@ -24,6 +24,11 @@ export async function connectToDatabase() {
     cached.promise = mongoose.connect(process.env.MONGODB_URI, options);
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    throw error;
+  }
 }
