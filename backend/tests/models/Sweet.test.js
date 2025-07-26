@@ -124,5 +124,33 @@ describe('Sweet Model', () => {
         }
       }
     });
+
+    it('should validate name length and content', async () => {
+      const testCases = [
+        { name: '', description: 'empty name' },
+        { name: '   ', description: 'whitespace only name' },
+        { name: 'A', description: 'too short name (1 char)' },
+        { name: 'A'.repeat(101), description: 'too long name (101 chars)' },
+        { name: 123, description: 'non-string name' }
+      ];
+
+      for (const testCase of testCases) {
+        const sweetData = {
+          name: testCase.name,
+          category: 'candy',
+          price: 2.50,
+          quantity: 10
+        };
+
+        const sweet = new Sweet(sweetData);
+        
+        try {
+          await sweet.validate();
+          fail(`Should have thrown validation error for ${testCase.description}`);
+        } catch (error) {
+          expect(error.errors.name).toBeDefined();
+        }
+      }
+    });
   });
 });
