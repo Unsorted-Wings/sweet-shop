@@ -4,14 +4,18 @@ function validateEmail(email) {
 }
 
 function validateRegistrationData(data) {
-    const { email, password, name } = data;
-    if (!email) {
-      return 'Email is required';
-    } else if (validateEmail(email) === false) {
-      return 'Invalid email format';
-    }
+  const { email, password, name } = data;
+  if (!email) {
+    return 'Email is required';
+  }
+  if (validateEmail(email) === false) {
+    return 'Invalid email format';
+  }
   if (!password) {
     return 'Password is required';
+  }
+  if (password.trim().length < 6) {
+    return 'Password must be at least 6 characters long';
   }
   if (!name) {
     return 'Name is required';
@@ -31,7 +35,7 @@ export default async function handler(req, res) {
     }
     res.status(201).json({
       message: 'User registered successfully',
-      userId: 'user123'
+      userId: 'user123',
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
