@@ -19,4 +19,14 @@ describe('User Model', () => {
       expect(user).toBeInstanceOf(User);
     });
   });
+    it('should set default role to customer if not provided', () => {
+        const userData = {
+            email: 'test@example.com',
+            password: 'hashedPassword123',
+            name: 'Test User'
+        };
+
+        const user = new User(userData);
+        expect(user.role).toBe('customer');
+    });
 });
