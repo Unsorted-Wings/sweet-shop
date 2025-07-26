@@ -61,4 +61,22 @@ describe('User Model', () => {
             expect(error.errors.role.message).toContain('is not a valid enum value');
         }
     });
+
+    it('should validate email format', async () => {
+        const userData = {
+            email: 'invalid-email-format',
+            password: 'hashedPassword123',
+            name: 'Test User'
+        };
+
+        const user = new User(userData);
+        
+        try {
+            await user.validate();
+            fail('Should have thrown validation error for invalid email');
+        } catch (error) {
+            expect(error.errors.email).toBeDefined();
+            expect(error.errors.email.message).toContain('Invalid email format');
+        }
+    });
 });
