@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { connectToDatabase } from '../utils/db.js';
+import { User } from '../models/User.js';
 import { validateRegistrationData } from '../utils/validation.js';
 
 /**
@@ -21,11 +22,10 @@ export class AuthController {
       throw new ValidationError(validationError);
     }
 
-    // Check if user already exists
-    const db = await connectToDatabase();
-    const usersCollection = db.collection('users');
-    const existingUser = await usersCollection.findOne({ email: userData.email });
-    
+    // Connect to the database
+    await connectToDatabase();
+    const existingUser = await User.findOne({ email: userData.email });
+
     if (existingUser) {
       throw new ConflictError('User with this email already exists');
     }
@@ -34,17 +34,17 @@ export class AuthController {
      const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
 
-    const result = await usersCollection.insertOne({
+    const newUser = new User({
       email: userData.email,
       password: hashedPassword,
       name: userData.name,
-      role: userData.role || 'customer',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      role: userData.role || 'customer'
     });
+
+    const savedUser = await newUser.save();
     return {
       message: 'User registered successfully',
-      userId: result.insertedId.toString()
+      userId: savedUser._id.toString()
     };
   }
 }
