@@ -31,5 +31,19 @@ describe('Sweet Model', () => {
       expect(sweet.id).toBeDefined();
       expect(typeof sweet.id).toBe('string');
     });
+
+    it('should validate required fields', async () => {
+      const sweet = new Sweet({});
+      
+      try {
+        await sweet.validate();
+        fail('Should have thrown validation error');
+      } catch (error) {
+        expect(error.errors.name).toBeDefined();
+        expect(error.errors.category).toBeDefined();
+        expect(error.errors.price).toBeDefined();
+        expect(error.errors.quantity).toBeDefined();
+      }
+    });
   });
 });
