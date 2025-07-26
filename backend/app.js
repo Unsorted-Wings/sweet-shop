@@ -2,6 +2,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { connectToDatabase } from './utils/db.js';
+import { authenticateToken, requireAdmin } from './middleware/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -53,6 +54,21 @@ export function createApp() {
   // Auth routes - mapping to serverless functions
   app.post('/api/auth/register', wrapHandler(registerHandler));
   app.post('/api/auth/login', wrapHandler(loginHandler));
+  
+  // Test routes for middleware testing
+  app.get('/api/protected/test', authenticateToken, (req, res) => {
+    res.json({
+      message: 'Access granted',
+      user: req.user
+    });
+  });
+  
+  app.get('/api/admin/test', authenticateToken, requireAdmin, (req, res) => {
+    res.json({
+      message: 'Admin access granted',
+      user: req.user
+    });
+  });
   
   return app;
 }
