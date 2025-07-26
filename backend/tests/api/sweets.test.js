@@ -258,4 +258,139 @@ describe('Sweet API Endpoints', () => {
       // We'll update this test when we implement the GET endpoint
     });
   });
+
+  describe('GET /api/sweets', () => {
+    it('should return all sweets for authenticated user', async () => {
+      const mockSweets = [
+        {
+          _id: 'sweet1',
+          name: 'Chocolate Cake',
+          price: 25.99,
+          category: 'cake',
+          quantity: 10,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          _id: 'sweet2',
+          name: 'Vanilla Cookies',
+          price: 12.50,
+          category: 'cookie',
+          quantity: 25,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      mockSweetFind.mockResolvedValue(mockSweets);
+
+      const response = await request(app)
+        .get('/api/sweets')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(2);
+      expect(response.body.sweets[0].name).toBe('Chocolate Cake');
+      expect(response.body.sweets[1].name).toBe('Vanilla Cookies');
+      expect(mockSweetFind).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return all sweets for admin user', async () => {
+      const mockSweets = [
+        {
+          _id: 'sweet1',
+          name: 'Chocolate Cake',
+          price: 25.99,
+          category: 'cake',
+          quantity: 10,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      mockSweetFind.mockResolvedValue(mockSweets);
+
+      const response = await request(app)
+        .get('/api/sweets')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(1);
+      expect(mockSweetFind).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return empty array when no sweets exist', async () => {
+      mockSweetFind.mockResolvedValue([]);
+
+      const response = await request(app)
+        .get('/api/sweets')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(0);
+      expect(response.body.message).toBe('No sweets found');
+      expect(mockSweetFind).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reject request without authentication', async () => {
+      const response = await request(app)
+        .get('/api/sweets')
+        .expect(401);
+
+      expect(response.body.error).toBe('Access token is required');
+      expect(mockSweetFind).not.toHaveBeenCalled();
+    });
+
+    it('should reject request with invalid token', async () => {
+      const response = await request(app)
+        .get('/api/sweets')
+        .set('Authorization', 'Bearer invalid-token')
+        .expect(401);
+
+      expect(response.body.error).toBe('Invalid or expired token');
+      expect(mockSweetFind).not.toHaveBeenCalled();
+    });
+
+    it('should handle database errors gracefully', async () => {
+      mockSweetFind.mockRejectedValue(new Error('Database connection failed'));
+
+      const response = await request(app)
+        .get('/api/sweets')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(500);
+
+      expect(response.body.error).toBe('Internal server error');
+      expect(mockSweetFind).toHaveBeenCalledTimes(1);
+    });
+
+    it('should support query parameters for filtering', async () => {
+      const mockSweets = [
+        {
+          _id: 'sweet1',
+          name: 'Chocolate Cake',
+          price: 25.99,
+          category: 'cake',
+          quantity: 10,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      mockSweetFind.mockReturnValue({
+        sort: jest.fn().mockResolvedValue(mockSweets)
+      });
+
+      const response = await request(app)
+        .get('/api/sweets?category=cake&sort=price')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(1);
+      expect(mockSweetFind).toHaveBeenCalledWith({ category: 'cake' });
+    });
+  });
 });
