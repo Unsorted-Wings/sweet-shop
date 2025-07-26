@@ -3,7 +3,14 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true
+    required: true,
+    validate: {
+      validator: function(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      },
+      message: 'Invalid email format'
+    }
   },
   password: {
     type: String,
