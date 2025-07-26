@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { connectToDatabase } from '../utils/db.js';
 import { User } from '../models/User.js';
 import { validateRegistrationData } from '../utils/validation.js';
@@ -42,10 +43,41 @@ export class AuthController {
     });
 
     const savedUser = await newUser.save();
+    
+    // Generate JWT token
+    const token = this.generateJWTToken({
+      userId: savedUser._id.toString(),
+      email: savedUser.email,
+      name: savedUser.name,
+      role: savedUser.role
+    });
+    
     return {
       message: 'User registered successfully',
-      userId: savedUser._id.toString()
+      userId: savedUser._id.toString(),
+      token: token,
+      user: {
+        id: savedUser._id.toString(),
+        email: savedUser.email,
+        name: savedUser.name,
+        role: savedUser.role
+      }
     };
+  }
+
+  /**
+   * Generate JWT token for user
+   * @param {Object} payload - Token payload
+   * @returns {string} - JWT token
+   */
+  generateJWTToken(payload) {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set');
+    }
+    
+    return jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: '24h' // Token expires in 24 hours
+    });
   }
 }
 
