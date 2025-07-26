@@ -11,5 +11,5 @@ export const VALIDATION_MESSAGES = {
   EMAIL_INVALID: 'Invalid email format',
   PASSWORD_REQUIRED: 'Password is required',
   PASSWORD_TOO_SHORT: 'Password must be at least 6 characters long',
-  NAME_REQUIRED: 'Name is required'
+  NAME_REQUIRED: 'Name is required',
 };
