@@ -208,7 +208,7 @@ describe('JWT Authentication Middleware', () => {
         .expect(401);
 
       expect(response.body).toEqual({
-        error: 'Invalid or expired token'
+        error: 'Invalid token format. Use Bearer <token>'
       });
     });
 
@@ -219,7 +219,7 @@ describe('JWT Authentication Middleware', () => {
         .expect(401);
 
       expect(response.body).toEqual({
-        error: 'Invalid or expired token'
+        error: 'Invalid token format. Use Bearer <token>'
       });
     });
   });

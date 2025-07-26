@@ -20,6 +20,11 @@ export function authenticateToken(req, res, next) {
   // Extract token from "Bearer <token>"
   const token = authHeader.substring(7);
   
+  // Check if token is empty or just whitespace
+  if (!token || !token.trim()) {
+    return res.status(401).json({ error: 'Invalid token format. Use Bearer <token>' });
+  }
+  
   try {
     // Verify the JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
