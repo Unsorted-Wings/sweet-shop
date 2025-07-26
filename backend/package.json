@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "scripts": {
-    "test": "jest",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "format": "prettier --write .",
     "lint": "eslint ."
   },
@@ -11,7 +11,7 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
