@@ -192,5 +192,31 @@ describe('AuthController', () => {
       // Verify User.findOne was called with correct email
       expect(User.findOne).toHaveBeenCalledWith({ email: 'nonexistent@example.com' });
     });
+
+    it('should reject with AuthenticationError for invalid password', async () => {
+      // Mock User.findOne to return an existing user with hashed password
+      const hashedPassword = await bcrypt.hash('correctPassword', 10);
+      const mockUser = {
+        _id: 'user123',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'customer',
+        password: hashedPassword
+      };
+      
+      jest.spyOn(User, 'findOne').mockResolvedValue(mockUser);
+
+      const loginData = {
+        email: 'test@example.com',
+        password: 'wrongPassword'
+      };
+
+      await expect(authController.loginUser(loginData))
+        .rejects
+        .toThrow('Invalid email or password');
+      
+      // Verify User.findOne was called with correct email
+      expect(User.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
+    });
   });
 });
