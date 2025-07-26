@@ -51,4 +51,17 @@ describe('connectToDatabase utility', () => {
     expect(conn2).toBe(mockConnection);
     expect(conn1).toBe(conn2);
   });
+
+  it('should throw an error when MONGODB_URI is not set', async () => {
+    mockConnect.mockClear();
+    const originalUri = process.env.MONGODB_URI;
+    delete process.env.MONGODB_URI;
+    
+    await expect(connectToDatabase()).rejects.toThrow(
+      'MONGODB_URI environment variable is not set'
+    );
+    
+    // Restore the environment variable for other tests
+    process.env.MONGODB_URI = originalUri;
+  });
 });
