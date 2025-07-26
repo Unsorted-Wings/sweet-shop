@@ -1,5 +1,6 @@
-import { connectToDatabase } from '../../utils/db.js';
-import { validateRegistrationData } from '../../utils/validation.js';
+import { AuthController, ValidationError, ConflictError } from '../../controllers/authController.js';
+
+const authController = new AuthController();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,25 +8,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const validationError = validateRegistrationData(req.body);
-    if (validationError) {
-      return res.status(400).json({ error: validationError });
-    }
-
-    // Check if user already exists
-    const db = await connectToDatabase();
-    const usersCollection = db.collection('users');
-    const existingUser = await usersCollection.findOne({ email: req.body.email });
-    
-    if (existingUser) {
-      return res.status(400).json({ error: 'User with this email already exists' });
-    }
-
-    res.status(201).json({
-      message: 'User registered successfully',
-      userId: 'user123',
-    });
+    const result = await authController.registerUser(req.body);
+    res.status(201).json(result);
   } catch (error) {
+    if (error instanceof ValidationError || error instanceof ConflictError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+    
+    // Log unexpected errors in production
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
