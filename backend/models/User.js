@@ -24,7 +24,13 @@ const userSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    required: true
+    required: true,
+    validate: {
+      validator: function(name) {
+        return name.trim().length > 0;
+      },
+      message: VALIDATION_MESSAGES.NAME_REQUIRED
+    }
   },
   role: {
     type: String,
