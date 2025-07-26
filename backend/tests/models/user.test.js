@@ -42,4 +42,23 @@ describe('User Model', () => {
             expect(error.errors.name).toBeDefined();
         }
     });
+
+    it('should reject invalid role values', async () => {
+        const userData = {
+            email: 'test@example.com',
+            password: 'hashedPassword123',
+            name: 'Test User',
+            role: 'invalid-role'
+        };
+
+        const user = new User(userData);
+        
+        try {
+            await user.validate();
+            fail('Should have thrown validation error for invalid role');
+        } catch (error) {
+            expect(error.errors.role).toBeDefined();
+            expect(error.errors.role.message).toContain('is not a valid enum value');
+        }
+    });
 });
