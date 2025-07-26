@@ -65,6 +65,44 @@ export class AuthController {
     };
   }
 
+  async loginUser(loginData) {
+    // Connect to the database
+    await connectToDatabase();
+    
+    // Find user by email
+    const user = await User.findOne({ email: loginData.email });
+    
+    if (!user) {
+      throw new AuthenticationError('Invalid email or password');
+    }
+    
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(loginData.password, user.password);
+    
+    if (!isPasswordValid) {
+      throw new AuthenticationError('Invalid email or password');
+    }
+    
+    // Generate JWT token
+    const token = this.generateJWTToken({
+      userId: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role
+    });
+    
+    return {
+      message: 'Login successful',
+      token: token,
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        role: user.role
+      }
+    };
+  }
+
   /**
    * Generate JWT token for user
    * @param {Object} payload - Token payload
@@ -97,5 +135,13 @@ export class ConflictError extends Error {
     super(message);
     this.name = 'ConflictError';
     this.statusCode = 400;
+  }
+}
+
+export class AuthenticationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'AuthenticationError';
+    this.statusCode = 401;
   }
 }
