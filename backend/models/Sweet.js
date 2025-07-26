@@ -14,7 +14,13 @@ const sweetSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: true
+    required: true,
+    validate: {
+      validator: function(price) {
+        return price > 0;
+      },
+      message: 'Price must be greater than 0'
+    }
   },
   quantity: {
     type: Number,
