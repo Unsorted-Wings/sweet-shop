@@ -134,4 +134,46 @@ describe('AuthController', () => {
         .toThrow('User with this email already exists');
     });
   });
+
+  describe('loginUser', () => {
+    it('should authenticate user with valid credentials', async () => {
+      // Mock User.findOne to return an existing user with hashed password
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      const mockUser = {
+        _id: 'user123',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'customer',
+        password: hashedPassword
+      };
+      
+      jest.spyOn(User, 'findOne').mockResolvedValue(mockUser);
+
+      const loginData = {
+        email: 'test@example.com',
+        password: 'password123'
+      };
+
+      const result = await authController.loginUser(loginData);
+
+      // Verify the result includes JWT token and user data
+      expect(result.message).toBe('Login successful');
+      expect(result.token).toBeDefined();
+      expect(typeof result.token).toBe('string');
+      expect(result.user).toBeDefined();
+      expect(result.user.email).toBe('test@example.com');
+      expect(result.user.name).toBe('Test User');
+      expect(result.user.role).toBe('customer');
+      
+      // Verify token contains user data
+      const jwt = await import('jsonwebtoken');
+      const decoded = jwt.default.verify(result.token, process.env.JWT_SECRET);
+      expect(decoded.userId).toBe('user123');
+      expect(decoded.email).toBe('test@example.com');
+      expect(decoded.role).toBe('customer');
+      
+      // Verify User.findOne was called with correct email
+      expect(User.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
+    });
+  });
 });
