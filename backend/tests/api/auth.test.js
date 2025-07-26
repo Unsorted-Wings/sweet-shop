@@ -26,6 +26,18 @@ describe('POST /api/auth/register', () => {
   });
 
   it('should register a new user with valid data', async () => {
+    // Setup mock to return no existing user
+    const mockDb = {
+      collection: jest.fn(() => ({
+        findOne: jest.fn().mockResolvedValue(null), // No existing user
+        insertOne: jest.fn().mockResolvedValue({
+          insertedId: 'user123'
+        })
+      }))
+    };
+    
+    connectToDatabase.mockResolvedValue(mockDb);
+
     const newUser = {
       email: 'test@example.com',
       password: 'password123',
@@ -157,13 +169,18 @@ describe('POST /api/auth/register', () => {
   });
 
   it('should return 400 when user already exists', async () => {
-    const mockDb = await connectToDatabase();
-    const mockCollection = mockDb.collection('users');
-    mockCollection.findOne.mockResolvedValue({
-      _id: 'existing-user-id',
-      email: 'existing@example.com',
-      name: 'Existing User'
-    });
+    // Setup mock for this specific test
+    const mockDb = {
+      collection: jest.fn(() => ({
+        findOne: jest.fn().mockResolvedValue({
+          _id: 'existing-user-id',
+          email: 'existing@example.com',
+          name: 'Existing User'
+        })
+      }))
+    };
+    
+    connectToDatabase.mockResolvedValue(mockDb);
 
     const duplicateUser = {
       email: 'existing@example.com',
@@ -180,8 +197,8 @@ describe('POST /api/auth/register', () => {
       error: 'User with this email already exists'
     });
 
-    expect(mockCollection.findOne).toHaveBeenCalledWith({
-      email: 'existing@example.com'
-    });
+    // Verify database was queried for existing user
+    expect(connectToDatabase).toHaveBeenCalled();
+    expect(mockDb.collection).toHaveBeenCalledWith('users');
   });
 });

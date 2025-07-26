@@ -1,3 +1,5 @@
+import { connectToDatabase } from '../../utils/db.js';
+
 function validateEmail(email) {
   const regularExpression = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regularExpression.test(email);
@@ -33,6 +35,16 @@ export default async function handler(req, res) {
     if (validationError) {
       return res.status(400).json({ error: validationError });
     }
+
+    // Check if user already exists
+    const db = await connectToDatabase();
+    const usersCollection = db.collection('users');
+    const existingUser = await usersCollection.findOne({ email: req.body.email });
+    
+    if (existingUser) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
     res.status(201).json({
       message: 'User registered successfully',
       userId: 'user123',
