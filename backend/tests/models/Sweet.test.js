@@ -71,5 +71,31 @@ describe('Sweet Model', () => {
         }
       }
     });
+
+    it('should validate quantity is non-negative integer', async () => {
+      const testCases = [
+        { quantity: -5, description: 'negative quantity' },
+        { quantity: 1.5, description: 'decimal quantity' },
+        { quantity: 'ten', description: 'non-numeric quantity' }
+      ];
+
+      for (const testCase of testCases) {
+        const sweetData = {
+          name: 'Test Sweet',
+          category: 'candy',
+          price: 2.50,
+          quantity: testCase.quantity
+        };
+
+        const sweet = new Sweet(sweetData);
+        
+        try {
+          await sweet.validate();
+          fail(`Should have thrown validation error for ${testCase.description}`);
+        } catch (error) {
+          expect(error.errors.quantity).toBeDefined();
+        }
+      }
+    });
   });
 });
