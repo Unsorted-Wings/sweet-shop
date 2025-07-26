@@ -42,4 +42,40 @@ describe('POST /api/auth/register', () => {
       userId: 'user123'
     });
   });
+
+  it('should return 400 when required fields are missing', async () => {
+    const testCases = [
+      {
+        description: 'missing email',
+        userData: { password: 'password123', name: 'Test User' },
+        expectedError: 'Email is required'
+      },
+      {
+        description: 'missing password', 
+        userData: { email: 'test@example.com', name: 'Test User' },
+        expectedError: 'Password is required'
+      },
+      {
+        description: 'missing name',
+        userData: { email: 'test@example.com', password: 'password123' },
+        expectedError: 'Name is required'
+      },
+      {
+        description: 'empty request body',
+        userData: {},
+        expectedError: 'Email is required'
+      }
+    ];
+
+    for (const testCase of testCases) {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(testCase.userData)
+        .expect(400);
+
+      expect(response.body).toEqual({
+        error: testCase.expectedError
+      });
+    }
+  });
 });
