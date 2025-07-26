@@ -105,4 +105,28 @@ describe('User Model', () => {
             }
         }
     });
+
+    it('should validate name field', async () => {
+        const testCases = [
+            { name: '', description: 'empty string' },
+            { name: '   ', description: 'only spaces' }
+        ];
+
+        for (const testCase of testCases) {
+            const userData = {
+                email: 'test@example.com',
+                password: 'hashedPassword123',
+                name: testCase.name
+            };
+
+            const user = new User(userData);
+            
+            try {
+                await user.validate();
+                fail(`Should have thrown validation error for name: ${testCase.description}`);
+            } catch (error) {
+                expect(error.errors.name).toBeDefined();
+            }
+        }
+    });
 });
