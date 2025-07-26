@@ -7,9 +7,9 @@ const router = express.Router();
 /**
  * POST /api/sweets
  * Create a new sweet
- * Requires authentication
+ * Requires admin authentication
  */
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { name, price, category, quantity } = req.body;
 

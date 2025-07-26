@@ -131,22 +131,15 @@ describe('Sweet API Endpoints', () => {
       expect(mockSweetSave).toHaveBeenCalledTimes(1);
     });
 
-    it('should allow customer to create a new sweet', async () => {
-      mockSweetSave.mockResolvedValue({
-        _id: 'sweet123',
-        ...validSweetData,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
+    it('should reject customer access (403 Forbidden)', async () => {
       const response = await request(app)
         .post('/api/sweets')
         .set('Authorization', `Bearer ${customerToken}`)
         .send(validSweetData)
-        .expect(201);
+        .expect(403);
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Sweet created successfully');
+      expect(response.body.error).toBe('Access denied. admin role required');
+      expect(mockSweetSave).not.toHaveBeenCalled();
     });
 
     it('should reject request without authentication', async () => {
