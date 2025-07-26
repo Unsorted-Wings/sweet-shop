@@ -29,4 +29,17 @@ describe('User Model', () => {
         const user = new User(userData);
         expect(user.role).toBe('customer');
     });
+
+    it('should validate required fields', async () => {
+        const user = new User({});
+        
+        try {
+            await user.validate();
+            fail('Should have thrown validation error');
+        } catch (error) {
+            expect(error.errors.email).toBeDefined();
+            expect(error.errors.password).toBeDefined();
+            expect(error.errors.name).toBeDefined();
+        }
+    });
 });
