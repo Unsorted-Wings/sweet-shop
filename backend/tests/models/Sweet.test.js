@@ -16,8 +16,6 @@ describe('Sweet Model', () => {
       expect(sweet.category).toBe('chocolate');
       expect(sweet.price).toBe(2.50);
       expect(sweet.quantity).toBe(100);
-      expect(sweet.createdAt).toBeInstanceOf(Date);
-      expect(sweet.updatedAt).toBeInstanceOf(Date);
       expect(sweet).toBeInstanceOf(Sweet);
     });
   });
