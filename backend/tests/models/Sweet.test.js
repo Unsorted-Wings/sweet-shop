@@ -45,5 +45,31 @@ describe('Sweet Model', () => {
         expect(error.errors.quantity).toBeDefined();
       }
     });
+
+    it('should validate price is positive', async () => {
+      const testCases = [
+        { price: -1.50, description: 'negative price' },
+        { price: 0, description: 'zero price' },
+        { price: 'invalid', description: 'non-numeric price' }
+      ];
+
+      for (const testCase of testCases) {
+        const sweetData = {
+          name: 'Test Sweet',
+          category: 'candy',
+          price: testCase.price,
+          quantity: 10
+        };
+
+        const sweet = new Sweet(sweetData);
+        
+        try {
+          await sweet.validate();
+          fail(`Should have thrown validation error for ${testCase.description}`);
+        } catch (error) {
+          expect(error.errors.price).toBeDefined();
+        }
+      }
+    });
   });
 });
