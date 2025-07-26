@@ -1,7 +1,9 @@
 function validateRegistrationData(data) {
   if (!data.email) {    
     return 'Email is required';
-  }
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    return 'Invalid email format';
+ }
   if (!data.password) {
     return 'Password is required';
   }
