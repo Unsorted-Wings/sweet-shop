@@ -229,15 +229,61 @@ describe('AuthController', () => {
         .rejects
         .toThrow('Email is required');
     });
-  });
-  it('should reject with ValidationError for missing password', async () => {
-    const loginData = {
-      email: 'test@example.com'
-      // password is missing
-    };
 
-    await expect(authController.loginUser(loginData))
-      .rejects
-      .toThrow('Password is required');
+    it('should reject with ValidationError for missing password', async () => {
+      const loginData = {
+        email: 'test@example.com'
+        // password is missing
+      };
+
+      await expect(authController.loginUser(loginData))
+        .rejects
+        .toThrow('Password is required');
+    });
+
+    it('should generate token with proper expiration time', async () => {
+      // Mock User.findOne to return an existing user with hashed password
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      const mockUser = {
+        _id: 'user123',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'customer',
+        password: hashedPassword
+      };
+      
+      jest.spyOn(User, 'findOne').mockResolvedValue(mockUser);
+
+      const loginData = {
+        email: 'test@example.com',
+        password: 'password123'
+      };
+
+      const beforeLogin = Math.floor(Date.now() / 1000);
+      const result = await authController.loginUser(loginData);
+      const afterLogin = Math.floor(Date.now() / 1000);
+
+      // Verify token was generated
+      expect(result.token).toBeDefined();
+      
+      // Decode token to check expiration
+      const jwt = await import('jsonwebtoken');
+      const decoded = jwt.default.decode(result.token);
+      
+      // Verify token has expiration time
+      expect(decoded.exp).toBeDefined();
+      expect(decoded.iat).toBeDefined();
+      
+      // Verify token was issued within the test timeframe
+      expect(decoded.iat).toBeGreaterThanOrEqual(beforeLogin);
+      expect(decoded.iat).toBeLessThanOrEqual(afterLogin);
+      
+      // Verify token expires in 24 hours (86400 seconds)
+      const expectedExpiration = decoded.iat + 86400;
+      expect(decoded.exp).toBe(expectedExpiration);
+      
+      // Verify token is currently valid
+      expect(decoded.exp).toBeGreaterThan(Math.floor(Date.now() / 1000));
+    });
   });
 });
