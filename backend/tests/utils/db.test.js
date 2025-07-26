@@ -66,9 +66,24 @@ describe('connectToDatabase utility', () => {
   });
 
   it('should throw an error when mongoose.connect fails', async () => {
+    mockConnect.mockClear();
     const connectionError = new Error('Connection failed');
     mockConnect.mockRejectedValueOnce(connectionError);
 
     await expect(connectToDatabase()).rejects.toThrow('Connection failed');
+  });
+
+  it('should handle concurrent connection attempts correctly', async () => {
+    mockConnect.mockClear();
+    
+    const promise1 = connectToDatabase();
+    const promise2 = connectToDatabase();
+    const promise3 = connectToDatabase();
+    
+    const [conn1, conn2, conn3] = await Promise.all([promise1, promise2, promise3]);
+    
+    expect(mockConnect).toHaveBeenCalledTimes(1);
+    expect(conn1).toBe(conn2);
+    expect(conn2).toBe(conn3);
   });
 });
