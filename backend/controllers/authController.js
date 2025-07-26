@@ -68,6 +68,10 @@ export class AuthController {
   async loginUser(loginData) {
     // Connect to the database
     await connectToDatabase();
+    // Validate input data
+    if (!loginData.email) {
+      throw new ValidationError('Email is required');
+    }
     
     // Find user by email
     const user = await User.findOne({ email: loginData.email });
