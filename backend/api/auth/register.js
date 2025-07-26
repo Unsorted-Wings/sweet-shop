@@ -1,13 +1,19 @@
+function validateEmail(email) {
+  const regularExpression = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regularExpression.test(email);
+}
+
 function validateRegistrationData(data) {
-  if (!data.email) {    
-    return 'Email is required';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-    return 'Invalid email format';
- }
-  if (!data.password) {
+    const { email, password, name } = data;
+    if (!email) {
+      return 'Email is required';
+    } else if (validateEmail(email) === false) {
+      return 'Invalid email format';
+    }
+  if (!password) {
     return 'Password is required';
   }
-  if (!data.name) {
+  if (!name) {
     return 'Name is required';
   }
   return null;
