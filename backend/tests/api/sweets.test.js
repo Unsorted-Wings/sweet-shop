@@ -249,13 +249,16 @@ describe('Sweet API Endpoints', () => {
       mockSweet.mockImplementation(originalImplementation);
     });
 
-    it('should return 405 for non-POST requests', async () => {
+    it('should return 200 for GET requests (endpoint now exists)', async () => {
+      mockSweetFind.mockResolvedValue([]);
+
       const response = await request(app)
         .get('/api/sweets')
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(404); // 404 until we implement GET
+        .expect(200);
 
-      // We'll update this test when we implement the GET endpoint
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('No sweets found');
     });
   });
 
@@ -379,9 +382,11 @@ describe('Sweet API Endpoints', () => {
         }
       ];
 
-      mockSweetFind.mockReturnValue({
+      // Mock the chaining behavior: find().sort()
+      const mockSortedQuery = {
         sort: jest.fn().mockResolvedValue(mockSweets)
-      });
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
 
       const response = await request(app)
         .get('/api/sweets?category=cake&sort=price')
@@ -391,6 +396,7 @@ describe('Sweet API Endpoints', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.sweets).toHaveLength(1);
       expect(mockSweetFind).toHaveBeenCalledWith({ category: 'cake' });
+      expect(mockSortedQuery.sort).toHaveBeenCalledWith({ price: 1 });
     });
   });
 });
