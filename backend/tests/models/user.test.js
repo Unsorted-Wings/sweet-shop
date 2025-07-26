@@ -149,4 +149,14 @@ describe('User Model', () => {
         }
     });
 
+    it('should handle email case sensitivity', () => {
+        const userData = {
+            email: 'TEST@EXAMPLE.COM',
+            password: 'hashedPassword123',
+            name: 'Test User'
+        };
+
+        const user = new User(userData);
+        expect(user.email).toBe('TEST@EXAMPLE.COM'); // Should preserve case
+    });
 });
