@@ -201,4 +201,47 @@ describe('POST /api/auth/register', () => {
     expect(connectToDatabase).toHaveBeenCalled();
     expect(mockDb.collection).toHaveBeenCalledWith('users');
   });
+
+  it('should hash the password before storing in database', async () => {
+    const mockInsertOne = jest.fn().mockResolvedValue({
+      insertedId: 'user123'
+    });
+    
+    const mockDb = {
+      collection: jest.fn(() => ({
+        findOne: jest.fn().mockResolvedValue(null), // No existing user
+        insertOne: mockInsertOne
+      }))
+    };
+    
+    connectToDatabase.mockResolvedValue(mockDb);
+
+    const userData = {
+      email: 'test@example.com',
+      password: 'plainTextPassword',
+      name: 'Test User'
+    };
+
+    await request(app)
+      .post('/api/auth/register')
+      .send(userData)
+      .expect(201);
+
+    // Verify insertOne was called
+    expect(mockInsertOne).toHaveBeenCalledTimes(1);
+    
+    // Get the data that was inserted
+    const insertedData = mockInsertOne.mock.calls[0][0];
+    
+    // Verify password is not stored as plain text
+    expect(insertedData.password).not.toBe('plainTextPassword');
+    
+    // Verify password is hashed (bcrypt hashes start with $2b$)
+    expect(insertedData.password).toMatch(/^\$2b\$10\$/);
+    
+    // Verify other fields are correct
+    expect(insertedData.email).toBe('test@example.com');
+    expect(insertedData.name).toBe('Test User');
+    expect(insertedData.role).toBe('customer');
+  });
 });
