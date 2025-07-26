@@ -24,7 +24,13 @@ const sweetSchema = new mongoose.Schema({
   },
   quantity: {
     type: Number,
-    required: true
+    required: true,
+    validate: {
+      validator: function(quantity) {
+        return Number.isInteger(quantity) && quantity >= 0;
+      },
+      message: 'Quantity must be a non-negative integer'
+    }
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt
