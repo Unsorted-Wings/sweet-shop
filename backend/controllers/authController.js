@@ -72,6 +72,9 @@ export class AuthController {
     if (!loginData.email) {
       throw new ValidationError('Email is required');
     }
+    if (!loginData.password) {
+      throw new ValidationError('Password is required');
+    }
     
     // Find user by email
     const user = await User.findOne({ email: loginData.email });
