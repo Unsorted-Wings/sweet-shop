@@ -18,5 +18,18 @@ describe('Sweet Model', () => {
       expect(sweet.quantity).toBe(100);
       expect(sweet).toBeInstanceOf(Sweet);
     });
+
+    it('should have an id field', () => {
+      const sweetData = {
+        name: 'Chocolate Bar',
+        category: 'chocolate',
+        price: 2.50,
+        quantity: 100
+      };
+
+      const sweet = new Sweet(sweetData);
+      expect(sweet.id).toBeDefined();
+      expect(typeof sweet.id).toBe('string');
+    });
   });
 });
