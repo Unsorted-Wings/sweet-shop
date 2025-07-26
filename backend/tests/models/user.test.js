@@ -79,4 +79,31 @@ describe('User Model', () => {
             expect(error.errors.email.message).toContain('Invalid email format');
         }
     });
+
+    it('should validate password length', async () => {
+        const testCases = [
+            { password: '123', description: 'too short' },
+            { password: '12345', description: 'exactly 5 chars' },
+            { password: '', description: 'empty string' },
+            { password: '     ', description: 'only spaces' }
+        ];
+
+        for (const testCase of testCases) {
+            const userData = {
+                email: 'test@example.com',
+                password: testCase.password,
+                name: 'Test User'
+            };
+
+            const user = new User(userData);
+            
+            try {
+                await user.validate();
+                fail(`Should have thrown validation error for password: ${testCase.description}`);
+            } catch (error) {
+                expect(error.errors.password).toBeDefined();
+                expect(error.errors.password.message).toContain('Password must be at least 6 characters long');
+            }
+        }
+    });
 });
