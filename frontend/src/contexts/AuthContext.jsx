@@ -18,6 +18,9 @@ export const AuthProvider = ({ children }) => {
 
   // API base URL from environment variables
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+  
+  // Debug: Log the API URL being used
+  console.log('🔧 Frontend using API URL:', API_BASE_URL)
 
   // Configure axios defaults
   axios.defaults.baseURL = API_BASE_URL

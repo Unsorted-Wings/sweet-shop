@@ -29,13 +29,15 @@ export function createApp() {
       ];
 
   console.log('🔧 CORS allowed origins:', allowedOrigins);
+  console.log('🌍 Node environment:', process.env.NODE_ENV);
 
   const corsOptions = {
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      // In development, be more permissive
+      if (process.env.NODE_ENV === 'development' || allowedOrigins.indexOf(origin) !== -1) {
         console.log(`✅ CORS allowed origin: ${origin}`);
         callback(null, true);
       } else {
