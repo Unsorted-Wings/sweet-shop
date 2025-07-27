@@ -26,7 +26,7 @@ const titleVariants = {
   }
 }
 
-function SweetsList({ sweets }) {
+function SweetsList({ sweets, onPurchaseSuccess }) {
   return (
     <motion.section 
       data-testid="sweets-list" 
@@ -58,6 +58,7 @@ function SweetsList({ sweets }) {
             testId={`sweet-card-${sweet.id}`} 
             buttonTestId={`purchase-btn-${sweet.id}`}
             index={index}
+            onPurchaseSuccess={onPurchaseSuccess}
           />
         ))}
       </motion.div>

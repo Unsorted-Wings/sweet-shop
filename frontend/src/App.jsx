@@ -6,7 +6,6 @@ import { AuthProvider } from './contexts/AuthContext'
 import Navigation from './components/Navigation'
 import Home from './pages/Home'
 import SweetDetail from './pages/SweetDetail'
-import Cart from './pages/Cart'
 import About from './pages/About'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -77,7 +76,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/sweet/:id" element={<SweetDetail />} />
-            <Route path="/cart" element={<Cart />} />
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

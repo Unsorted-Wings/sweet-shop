@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { sweetAPI } from '../services/api'
 
 const cardVariants = {
   hidden: { 
@@ -70,9 +72,47 @@ const buttonVariants = {
   tap: { scale: 0.95 }
 }
 
-function SweetCard({ sweet, testId, buttonTestId, index }) {
+function SweetCard({ sweet, testId, buttonTestId, index, onPurchaseSuccess }) {
+  const { isAuthenticated } = useAuth()
+  const [purchasing, setPurchasing] = useState(false)
   const isOutOfStock = sweet.quantity === 0
   const isLowStock = sweet.quantity > 0 && sweet.quantity <= 5
+
+  const handlePurchase = async (e) => {
+    e.preventDefault() // Prevent Link navigation
+    e.stopPropagation()
+
+    if (!isAuthenticated) {
+      alert('Please log in to purchase sweets!')
+      return
+    }
+
+    if (isOutOfStock) return
+
+    try {
+      setPurchasing(true)
+      await sweetAPI.purchase(sweet._id || sweet.id, 1)
+      
+      // Show success message
+      alert(`Successfully purchased ${sweet.name}! 🎉`)
+      
+      // Notify parent component to refresh data
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess()
+      }
+    } catch (error) {
+      console.error('Purchase failed:', error)
+      if (error.response?.status === 401) {
+        alert('Please log in to purchase sweets!')
+      } else if (error.response?.status === 400) {
+        alert(error.response?.data?.error || 'Insufficient stock!')
+      } else {
+        alert('Purchase failed. Please try again.')
+      }
+    } finally {
+      setPurchasing(false)
+    }
+  }
   
   // Get sweet emoji based on name
   const getSweetEmoji = (name) => {
@@ -189,7 +229,7 @@ function SweetCard({ sweet, testId, buttonTestId, index }) {
                 ? 'text-gray-400' 
                 : 'text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-purple-300'
             }`}>
-              {isOutOfStock ? 'Out of Stock' : sweet.price}
+              {isOutOfStock ? 'Out of Stock' : `$${sweet.price}`}
             </p>
             
             {isLowStock && !isOutOfStock && (
@@ -207,19 +247,22 @@ function SweetCard({ sweet, testId, buttonTestId, index }) {
           <motion.button 
             type="button" 
             data-testid={buttonTestId}
-            disabled={isOutOfStock}
+            disabled={isOutOfStock || purchasing}
+            onClick={handlePurchase}
             className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 relative overflow-hidden ${
-              isOutOfStock
+              isOutOfStock || purchasing
                 ? 'bg-gray-600/30 text-gray-400 cursor-not-allowed backdrop-blur-md border border-gray-500/30'
-                : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg backdrop-blur-md border border-pink-400/30'
+                : isAuthenticated
+                ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg backdrop-blur-md border border-green-400/30'
+                : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg backdrop-blur-md border border-blue-400/30'
             }`}
             variants={buttonVariants}
             initial="rest"
-            whileHover={!isOutOfStock ? "hover" : "rest"}
-            whileTap={!isOutOfStock ? "tap" : "rest"}
+            whileHover={!isOutOfStock && !purchasing ? "hover" : "rest"}
+            whileTap={!isOutOfStock && !purchasing ? "tap" : "rest"}
           >
             {/* Button shimmer effect */}
-            {!isOutOfStock && (
+            {!isOutOfStock && !purchasing && (
               <motion.div 
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                 initial={{ x: '-100%' }}
@@ -229,10 +272,14 @@ function SweetCard({ sweet, testId, buttonTestId, index }) {
             )}
             
             <span className="relative flex items-center justify-center gap-2">
-              {isOutOfStock ? (
+              {purchasing ? (
+                <>⏳ Purchasing...</>
+              ) : isOutOfStock ? (
                 <>😔 Sold Out</>
+              ) : isAuthenticated ? (
+                <>🛍️ Buy Now (${sweet.price})</>
               ) : (
-                <>🛒 Add to Cart</>
+                <>🔐 Login to Buy</>
               )}
             </span>
           </motion.button>

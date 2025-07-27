@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, User, LogOut, Settings } from 'lucide-react'
+import { User, LogOut, Settings } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 const navVariants = {
@@ -120,39 +120,6 @@ function Navigation() {
             {/* Auth-dependent links */}
             {isAuthenticated ? (
               <>
-                <Link to="/cart">
-                  <motion.div 
-                    className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border relative ${
-                      isActive('/cart') 
-                        ? 'text-white bg-white/20 border-white/30' 
-                        : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
-                    }`}
-                    variants={linkVariants}
-                    initial="rest"
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <span className="flex items-center gap-3">
-                      <motion.span 
-                        variants={iconFloat} 
-                        animate="animate"
-                        style={{ animationDelay: "1s" }}
-                      >
-                        <ShoppingCart size={18} />
-                      </motion.span>
-                      <span>Cart</span>
-                    </span>
-                    {/* Cart badge */}
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-2 -right-2 w-5 h-5 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center"
-                    >
-                      3
-                    </motion.div>
-                  </motion.div>
-                </Link>
-
                 {/* Admin Dashboard Link */}
                 {isAdmin && (
                   <Link to="/admin">

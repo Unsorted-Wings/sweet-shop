@@ -35,6 +35,16 @@ function AdminDashboard() {
   })
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showRestockModal, setShowRestockModal] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    price: '',
+    category: '',
+    quantity: ''
+  })
+  const [restockQuantity, setRestockQuantity] = useState('')
 
   useEffect(() => {
     if (isAdmin) {
@@ -100,6 +110,86 @@ function AdminDashboard() {
         alert('Failed to delete product. Please try again.')
       }
     }
+  }
+
+  const handleAddProduct = async (e) => {
+    e.preventDefault()
+    try {
+      const productData = {
+        name: newProduct.name,
+        price: parseFloat(newProduct.price),
+        category: newProduct.category,
+        quantity: parseInt(newProduct.quantity)
+      }
+      
+      const response = await sweetAPI.create(productData)
+      
+      if (response) {
+        // Add to products list
+        const newProductItem = {
+          id: response._id || response.id,
+          name: response.name,
+          price: response.price,
+          stock: response.quantity,
+          category: response.category,
+          status: response.quantity > 0 ? 'active' : 'out-of-stock'
+        }
+        
+        setProducts([...products, newProductItem])
+        
+        // Update stats
+        setStats(prev => ({
+          ...prev,
+          totalProducts: prev.totalProducts + 1
+        }))
+        
+        // Reset form and close modal
+        setNewProduct({ name: '', price: '', category: '', quantity: '' })
+        setShowAddModal(false)
+        
+        alert('Product added successfully!')
+      }
+    } catch (error) {
+      console.error('Failed to add product:', error)
+      alert('Failed to add product. Please try again.')
+    }
+  }
+
+  const handleRestock = async (e) => {
+    e.preventDefault()
+    if (!selectedProduct || !restockQuantity) return
+    
+    try {
+      const response = await sweetAPI.restock(selectedProduct.id, parseInt(restockQuantity))
+      
+      if (response) {
+        // Update product in the list
+        setProducts(products.map(p => 
+          p.id === selectedProduct.id 
+            ? { 
+                ...p, 
+                stock: p.stock + parseInt(restockQuantity),
+                status: p.stock + parseInt(restockQuantity) > 0 ? 'active' : 'out-of-stock'
+              }
+            : p
+        ))
+        
+        // Reset and close modal
+        setRestockQuantity('')
+        setSelectedProduct(null)
+        setShowRestockModal(false)
+        
+        alert('Product restocked successfully!')
+      }
+    } catch (error) {
+      console.error('Failed to restock product:', error)
+      alert('Failed to restock product. Please try again.')
+    }
+  }
+
+  const openRestockModal = (product) => {
+    setSelectedProduct(product)
+    setShowRestockModal(true)
   }
 
   if (!isAdmin) {
@@ -241,6 +331,7 @@ function AdminDashboard() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowAddModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-xl"
                   >
                     <Plus size={18} />
@@ -298,13 +389,24 @@ function AdminDashboard() {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                              title="View Product"
                             >
                               <Eye size={16} />
                             </motion.button>
                             <motion.button
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
+                              onClick={() => openRestockModal(product)}
+                              className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors"
+                              title="Restock Product"
+                            >
+                              <Package size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
                               className="p-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition-colors"
+                              title="Edit Product"
                             >
                               <Edit size={16} />
                             </motion.button>
@@ -313,6 +415,7 @@ function AdminDashboard() {
                               whileTap={{ scale: 0.9 }}
                               onClick={() => handleDeleteProduct(product.id)}
                               className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                              title="Delete Product"
                             >
                               <Trash2 size={16} />
                             </motion.button>
@@ -327,6 +430,153 @@ function AdminDashboard() {
           </>
         )}
       </div>
+
+      {/* Add Product Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6 w-full max-w-md"
+          >
+            <h3 className="text-2xl font-bold text-white mb-6">Add New Product</h3>
+            <form onSubmit={handleAddProduct} className="space-y-4">
+              <div>
+                <label className="block text-gray-300 text-sm font-semibold mb-2">Product Name</label>
+                <input
+                  type="text"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-pink-500"
+                  placeholder="Enter product name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 text-sm font-semibold mb-2">Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-pink-500"
+                  placeholder="Enter price"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 text-sm font-semibold mb-2">Category</label>
+                <select
+                  value={newProduct.category}
+                  onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-pink-500"
+                  required
+                >
+                  <option value="">Select category</option>
+                  <option value="chocolate">Chocolate</option>
+                  <option value="candy">Candy</option>
+                  <option value="gummy">Gummy</option>
+                  <option value="hard-candy">Hard Candy</option>
+                  <option value="lollipop">Lollipop</option>
+                  <option value="toffee">Toffee</option>
+                  <option value="fudge">Fudge</option>
+                  <option value="marshmallow">Marshmallow</option>
+                  <option value="cake">Cake</option>
+                  <option value="cookie">Cookie</option>
+                  <option value="pastry">Pastry</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-300 text-sm font-semibold mb-2">Initial Quantity</label>
+                <input
+                  type="number"
+                  value={newProduct.quantity}
+                  onChange={(e) => setNewProduct({...newProduct, quantity: e.target.value})}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-pink-500"
+                  placeholder="Enter quantity"
+                  required
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setShowAddModal(false)
+                    setNewProduct({ name: '', price: '', category: '', quantity: '' })
+                  }}
+                  className="flex-1 px-4 py-3 bg-gray-500/20 text-gray-300 font-semibold rounded-xl hover:bg-gray-500/30 transition-colors"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-xl"
+                >
+                  Add Product
+                </motion.button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Restock Modal */}
+      {showRestockModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6 w-full max-w-md"
+          >
+            <h3 className="text-2xl font-bold text-white mb-6">Restock Product</h3>
+            <div className="mb-4">
+              <p className="text-gray-300">Product: <span className="text-white font-semibold">{selectedProduct.name}</span></p>
+              <p className="text-gray-300">Current Stock: <span className="text-white font-semibold">{selectedProduct.stock}</span></p>
+            </div>
+            <form onSubmit={handleRestock} className="space-y-4">
+              <div>
+                <label className="block text-gray-300 text-sm font-semibold mb-2">Add Quantity</label>
+                <input
+                  type="number"
+                  value={restockQuantity}
+                  onChange={(e) => setRestockQuantity(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-pink-500"
+                  placeholder="Enter quantity to add"
+                  min="1"
+                  required
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setShowRestockModal(false)
+                    setSelectedProduct(null)
+                    setRestockQuantity('')
+                  }}
+                  className="flex-1 px-4 py-3 bg-gray-500/20 text-gray-300 font-semibold rounded-xl hover:bg-gray-500/30 transition-colors"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl"
+                >
+                  Restock
+                </motion.button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   )
 }

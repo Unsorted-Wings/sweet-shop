@@ -36,6 +36,7 @@ function SweetDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [quantity, setQuantity] = useState(1)
+  const [purchasing, setPurchasing] = useState(false)
 
   useEffect(() => {
     fetchSweetDetail()
@@ -130,9 +131,43 @@ function SweetDetail() {
     }
   }
 
-  const handleAddToCart = () => {
-    // Add to cart logic here
-    console.log(`Added ${quantity} x ${sweet.name} to cart`)
+  const handlePurchase = async () => {
+    if (!isAuthenticated) {
+      alert('Please log in to purchase sweets!')
+      navigate('/login')
+      return
+    }
+
+    if (!sweet || sweet.stock === 0) {
+      alert('This sweet is out of stock!')
+      return
+    }
+
+    try {
+      setPurchasing(true)
+      await sweetAPI.purchase(sweet._id || sweet.id, quantity)
+      
+      // Show success message
+      alert(`Successfully purchased ${quantity} x ${sweet.name}! 🎉`)
+      
+      // Refresh sweet details to show updated stock
+      await fetchSweetDetail()
+      
+      // Reset quantity
+      setQuantity(1)
+    } catch (error) {
+      console.error('Purchase failed:', error)
+      if (error.response?.status === 401) {
+        alert('Please log in to purchase sweets!')
+        navigate('/login')
+      } else if (error.response?.status === 400) {
+        alert(error.response?.data?.error || 'Insufficient stock!')
+      } else {
+        alert('Purchase failed. Please try again.')
+      }
+    } finally {
+      setPurchasing(false)
+    }
   }
 
   if (loading) {
@@ -274,20 +309,40 @@ function SweetDetail() {
               </div>
             </div>
 
-            {/* Add to Cart Button */}
+            {/* Purchase Button */}
             <motion.button
-              whileHover={{ scale: sweet.stock > 0 ? 1.02 : 1 }}
-              whileTap={{ scale: sweet.stock > 0 ? 0.98 : 1 }}
-              onClick={handleAddToCart}
-              disabled={sweet.stock === 0}
+              whileHover={{ scale: sweet.stock > 0 && !purchasing ? 1.02 : 1 }}
+              whileTap={{ scale: sweet.stock > 0 && !purchasing ? 0.98 : 1 }}
+              onClick={handlePurchase}
+              disabled={sweet.stock === 0 || purchasing || !isAuthenticated}
               className={`w-full py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-3 transition-all duration-300 ${
-                sweet.stock > 0
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg hover:shadow-pink-500/25'
-                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                purchasing
+                  ? 'bg-yellow-600 text-yellow-100'
+                  : sweet.stock === 0
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  : !isAuthenticated
+                  ? 'bg-blue-600 text-blue-100 hover:bg-blue-700'
+                  : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:shadow-green-500/25'
               }`}
             >
-              <ShoppingCart size={24} />
-              {sweet.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+              {purchasing ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-yellow-200 border-t-transparent rounded-full animate-spin"></div>
+                  Purchasing...
+                </>
+              ) : sweet.stock === 0 ? (
+                <>
+                  😔 Out of Stock
+                </>
+              ) : !isAuthenticated ? (
+                <>
+                  🔐 Login to Purchase
+                </>
+              ) : (
+                <>
+                  🛍️ Buy Now (${(sweet.price * quantity).toFixed(2)})
+                </>
+              )}
             </motion.button>
 
             {/* Additional Info */}

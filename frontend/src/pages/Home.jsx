@@ -219,7 +219,7 @@ function Home() {
             <div className="text-2xl text-white/60">Loading delicious sweets...</div>
           </motion.div>
         ) : (
-          <SweetsList sweets={sweets} />
+          <SweetsList sweets={sweets} onPurchaseSuccess={fetchSweets} />
         )}
       </motion.main>
     </motion.div>
