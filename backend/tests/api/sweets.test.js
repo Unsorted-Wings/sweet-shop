@@ -817,4 +817,108 @@ describe('Sweet API Endpoints', () => {
       // We'll keep it simple for now
     });
   });
+
+  describe('DELETE /api/sweets/:id', () => {
+    const sweetId = '6123456789abcdef12345678';
+    let mockSweetFindByIdAndDelete;
+
+    beforeEach(() => {
+      mockSweetFindByIdAndDelete = jest.fn();
+      mockSweet.findByIdAndDelete = mockSweetFindByIdAndDelete;
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should delete sweet successfully when admin is authenticated', async () => {
+      const deletedSweet = {
+        _id: sweetId,
+        name: 'Deleted Sweet',
+        price: 5.99,
+        category: 'Chocolate',
+        quantity: 0
+      };
+
+      mockSweetFindByIdAndDelete.mockResolvedValue(deletedSweet);
+
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Sweet deleted successfully');
+      expect(response.body.sweet).toEqual(expect.objectContaining({
+        _id: sweetId,
+        name: 'Deleted Sweet'
+      }));
+      expect(mockSweetFindByIdAndDelete).toHaveBeenCalledWith(sweetId);
+    });
+
+    it('should return 404 when sweet does not exist', async () => {
+      mockSweetFindByIdAndDelete.mockResolvedValue(null);
+
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(404);
+
+      expect(response.body.error).toBe('Sweet not found');
+      expect(mockSweetFindByIdAndDelete).toHaveBeenCalledWith(sweetId);
+    });
+
+    it('should return 401 when no authentication token provided', async () => {
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`)
+        .expect(401);
+
+      expect(response.body.error).toBe('Authentication token required');
+      expect(mockSweetFindByIdAndDelete).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 when customer tries to delete sweet', async () => {
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(403);
+
+      expect(response.body.error).toBe('Admin access required');
+      expect(mockSweetFindByIdAndDelete).not.toHaveBeenCalled();
+    });
+
+    it('should return 401 with invalid authentication token', async () => {
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`)
+        .set('Authorization', 'Bearer invalid-token')
+        .expect(401);
+
+      expect(response.body.error).toBe('Invalid authentication token');
+      expect(mockSweetFindByIdAndDelete).not.toHaveBeenCalled();
+    });
+
+    it('should handle database errors gracefully', async () => {
+      mockSweetFindByIdAndDelete.mockRejectedValue(new Error('Database connection lost'));
+
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(500);
+
+      expect(response.body.error).toBe('Internal server error');
+      expect(mockSweetFindByIdAndDelete).toHaveBeenCalledWith(sweetId);
+    });
+
+    it('should handle malformed ObjectId gracefully', async () => {
+      const invalidId = 'invalid-object-id';
+      mockSweetFindByIdAndDelete.mockRejectedValue(new Error('Cast to ObjectId failed'));
+
+      const response = await request(app)
+        .delete(`/api/sweets/${invalidId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(500);
+
+      expect(response.body.error).toBe('Internal server error');
+    });
+  });
 });
