@@ -95,6 +95,85 @@ router.get('/', authenticateToken, async (req, res) => {
 
 
 /**
+ * GET /api/sweets/search
+ * Search for sweets by name, category, or price range
+ * Requires authentication (both customer and admin can search)
+ */
+router.get('/search', authenticateToken, async (req, res) => {
+  try {
+    const { name, category, minPrice, maxPrice, sort, order = 'asc' } = req.query;
+    
+    // Validate price parameters
+    if ((minPrice && isNaN(parseFloat(minPrice))) || (maxPrice && isNaN(parseFloat(maxPrice)))) {
+      return res.status(400).json({
+        error: 'Invalid price parameters. minPrice and maxPrice must be valid numbers.'
+      });
+    }
+    
+    const minPriceNum = minPrice ? parseFloat(minPrice) : null;
+    const maxPriceNum = maxPrice ? parseFloat(maxPrice) : null;
+    
+    // Validate price range
+    if (minPriceNum && maxPriceNum && minPriceNum > maxPriceNum) {
+      return res.status(400).json({
+        error: 'minPrice cannot be greater than maxPrice'
+      });
+    }
+    
+    // Build search filter object
+    const filter = {};
+    
+    // Add name search (case-insensitive regex)
+    if (name) {
+      filter.name = { $regex: name, $options: 'i' };
+    }
+    
+    // Add category filter
+    if (category) {
+      filter.category = category;
+    }
+    
+    // Add price range filter
+    if (minPriceNum || maxPriceNum) {
+      filter.price = {};
+      if (minPriceNum) filter.price.$gte = minPriceNum;
+      if (maxPriceNum) filter.price.$lte = maxPriceNum;
+    }
+    
+    // Find sweets with search filters
+    let query = Sweet.find(filter);
+    
+    // Add sorting if specified
+    if (sort) {
+      const sortOrder = order === 'desc' ? -1 : 1;
+      query = query.sort({ [sort]: sortOrder });
+    }
+    
+    const sweets = await query;
+    
+    // Return results
+    if (sweets.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No sweets found matching search criteria',
+        sweets: []
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: `Found ${sweets.length} sweet${sweets.length === 1 ? '' : 's'} matching search criteria`,
+      sweets
+    });
+  } catch (error) {
+    console.error('Error searching sweets:', error);
+    res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
  * PUT /api/sweets/:id
  * Update sweet details (name, price, category only - NOT quantity)
  * Requires admin authentication

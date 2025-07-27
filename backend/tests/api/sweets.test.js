@@ -423,16 +423,16 @@ describe('Sweet API Endpoints', () => {
     ];
 
     it('should search sweets by name for authenticated user', async () => {
-      const mockSortedQuery = {
-        sort: jest.fn().mockResolvedValue(mockSearchResults.filter(s => s.name.includes('Chocolate')))
-      };
-      mockSweetFind.mockReturnValue(mockSortedQuery);
+      const filteredResults = mockSearchResults.filter(s => s.name.includes('Chocolate'));
+      
+      // No sorting, so Sweet.find should return the array directly
+      mockSweetFind.mockResolvedValue(filteredResults);
 
       const response = await request(app)
         .get('/api/sweets/search?name=Chocolate')
         .set('Authorization', `Bearer ${customerToken}`)
         .expect(200);
-
+      
       expect(response.body.success).toBe(true);
       expect(response.body.sweets).toHaveLength(2);
       expect(response.body.sweets[0].name).toContain('Chocolate');
@@ -442,10 +442,10 @@ describe('Sweet API Endpoints', () => {
     });
 
     it('should search sweets by category for authenticated user', async () => {
-      const mockSortedQuery = {
-        sort: jest.fn().mockResolvedValue([mockSearchResults[0]])
-      };
-      mockSweetFind.mockReturnValue(mockSortedQuery);
+      const filteredResults = [mockSearchResults[0]]; // Only cake category
+      
+      // No sorting, so Sweet.find should return the array directly
+      mockSweetFind.mockResolvedValue(filteredResults);
 
       const response = await request(app)
         .get('/api/sweets/search?category=cake')
@@ -459,10 +459,10 @@ describe('Sweet API Endpoints', () => {
     });
 
     it('should search sweets by price range for authenticated user', async () => {
-      const mockSortedQuery = {
-        sort: jest.fn().mockResolvedValue([mockSearchResults[1]])
-      };
-      mockSweetFind.mockReturnValue(mockSortedQuery);
+      const filteredResults = [mockSearchResults[1]]; // Only cookies in price range
+      
+      // No sorting, so Sweet.find should return the array directly
+      mockSweetFind.mockResolvedValue(filteredResults);
 
       const response = await request(app)
         .get('/api/sweets/search?minPrice=10&maxPrice=20')
@@ -478,10 +478,10 @@ describe('Sweet API Endpoints', () => {
     });
 
     it('should search with combined filters (name and category)', async () => {
-      const mockSortedQuery = {
-        sort: jest.fn().mockResolvedValue([mockSearchResults[1]])
-      };
-      mockSweetFind.mockReturnValue(mockSortedQuery);
+      const filteredResults = [mockSearchResults[1]]; // Chocolate Cookies
+      
+      // No sorting, so Sweet.find should return the array directly
+      mockSweetFind.mockResolvedValue(filteredResults);
 
       const response = await request(app)
         .get('/api/sweets/search?name=Chocolate&category=cookie')
@@ -489,6 +489,7 @@ describe('Sweet API Endpoints', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(1);
       expect(mockSweetFind).toHaveBeenCalledWith({
         name: { $regex: 'Chocolate', $options: 'i' },
         category: 'cookie'
@@ -496,10 +497,10 @@ describe('Sweet API Endpoints', () => {
     });
 
     it('should search with all filters combined', async () => {
-      const mockSortedQuery = {
-        sort: jest.fn().mockResolvedValue([mockSearchResults[1]])
-      };
-      mockSweetFind.mockReturnValue(mockSortedQuery);
+      const filteredResults = [mockSearchResults[1]]; // Chocolate Cookies in price range
+      
+      // No sorting, so Sweet.find should return the array directly
+      mockSweetFind.mockResolvedValue(filteredResults);
 
       const response = await request(app)
         .get('/api/sweets/search?name=Chocolate&category=cookie&minPrice=10&maxPrice=20')
@@ -507,6 +508,7 @@ describe('Sweet API Endpoints', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(1);
       expect(mockSweetFind).toHaveBeenCalledWith({
         name: { $regex: 'Chocolate', $options: 'i' },
         category: 'cookie',
@@ -515,10 +517,8 @@ describe('Sweet API Endpoints', () => {
     });
 
     it('should return empty results when no sweets match search criteria', async () => {
-      const mockSortedQuery = {
-        sort: jest.fn().mockResolvedValue([])
-      };
-      mockSweetFind.mockReturnValue(mockSortedQuery);
+      // No sorting, so Sweet.find should return the array directly
+      mockSweetFind.mockResolvedValue([]);
 
       const response = await request(app)
         .get('/api/sweets/search?name=NonexistentSweet')
@@ -598,10 +598,8 @@ describe('Sweet API Endpoints', () => {
     });
 
     it('should work for admin users', async () => {
-      const mockSortedQuery = {
-        sort: jest.fn().mockResolvedValue(mockSearchResults)
-      };
-      mockSweetFind.mockReturnValue(mockSortedQuery);
+      // No sorting, so Sweet.find should return the array directly
+      mockSweetFind.mockResolvedValue(mockSearchResults);
 
       const response = await request(app)
         .get('/api/sweets/search?name=Chocolate')
