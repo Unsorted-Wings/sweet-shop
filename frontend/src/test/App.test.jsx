@@ -41,4 +41,16 @@ describe('App Component', () => {
     expect(screen.getByText('₹500')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /purchase/i })).toBeInTheDocument()
   })
+
+  it('should disable purchase button when sweet quantity is zero', () => {
+    render(<App />)
+    
+    const outOfStockCard = screen.getByTestId('sweet-card-2')
+    expect(outOfStockCard).toBeInTheDocument()
+    expect(screen.getByText('Vanilla Cupcake')).toBeInTheDocument()
+    expect(screen.getByText('Out of Stock')).toBeInTheDocument()
+    
+    const purchaseButton = screen.getByTestId('purchase-btn-2')
+    expect(purchaseButton).toBeDisabled()
+  })
 })
