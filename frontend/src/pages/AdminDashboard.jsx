@@ -27,17 +27,14 @@ const pageVariants = {
 
 function AdminDashboard() {
   const { user, isAdmin } = useAuth()
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalOrders: 0,
-    totalRevenue: 0,
-    totalProducts: 0
-  })
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showRestockModal, setShowRestockModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editQuantity, setEditQuantity] = useState('')
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: '',
@@ -97,6 +94,7 @@ function AdminDashboard() {
 
   const handleDeleteProduct = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
+      setDeletingId(id)
       try {
         await sweetAPI.delete(id)
         setProducts(products.filter(p => p.id !== id))
@@ -107,7 +105,10 @@ function AdminDashboard() {
         }))
       } catch (error) {
         console.error('Failed to delete product:', error)
-        alert('Failed to delete product. Please try again.')
+        const msg = error?.response?.data?.error || 'Failed to delete product. Please try again.'
+        alert(msg)
+      } finally {
+        setDeletingId(null)
       }
     }
   }
@@ -158,12 +159,9 @@ function AdminDashboard() {
   const handleRestock = async (e) => {
     e.preventDefault()
     if (!selectedProduct || !restockQuantity) return
-    
     try {
       const response = await sweetAPI.restock(selectedProduct.id, parseInt(restockQuantity))
-      
       if (response) {
-        // Update product in the list
         setProducts(products.map(p => 
           p.id === selectedProduct.id 
             ? { 
@@ -173,17 +171,46 @@ function AdminDashboard() {
               }
             : p
         ))
-        
-        // Reset and close modal
         setRestockQuantity('')
         setSelectedProduct(null)
         setShowRestockModal(false)
-        
         alert('Product restocked successfully!')
       }
     } catch (error) {
       console.error('Failed to restock product:', error)
       alert('Failed to restock product. Please try again.')
+    }
+  }
+
+  const openEditModal = (product) => {
+    setSelectedProduct(product)
+    setEditQuantity(product.stock)
+    setShowEditModal(true)
+  }
+
+  const handleEditQuantity = async (e) => {
+    e.preventDefault()
+    if (!selectedProduct || editQuantity === '') return
+    try {
+      const response = await sweetAPI.update(selectedProduct.id, { quantity: parseInt(editQuantity) })
+      if (response) {
+        setProducts(products.map(p =>
+          p.id === selectedProduct.id
+            ? {
+                ...p,
+                stock: response.quantity,
+                status: response.quantity > 0 ? 'active' : 'out-of-stock'
+              }
+            : p
+        ))
+        setShowEditModal(false)
+        setSelectedProduct(null)
+        setEditQuantity('')
+        alert('Quantity updated successfully!')
+      }
+    } catch (error) {
+      console.error('Failed to update quantity:', error)
+      alert('Failed to update quantity. Please try again.')
     }
   }
 
@@ -252,68 +279,6 @@ function AdminDashboard() {
           </div>
         ) : (
           <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total Users</p>
-                    <p className="text-3xl font-bold text-white">{stats.totalUsers.toLocaleString()}</p>
-                  </div>
-                  <Users className="text-blue-400" size={32} />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total Orders</p>
-                    <p className="text-3xl font-bold text-white">{stats.totalOrders.toLocaleString()}</p>
-                  </div>
-                  <ShoppingBag className="text-green-400" size={32} />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total Revenue</p>
-                    <p className="text-3xl font-bold text-white">${stats.totalRevenue.toLocaleString()}</p>
-                  </div>
-                  <DollarSign className="text-yellow-400" size={32} />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total Products</p>
-                    <p className="text-3xl font-bold text-white">{stats.totalProducts}</p>
-                  </div>
-                  <Package className="text-purple-400" size={32} />
-                </div>
-              </motion.div>
-            </div>
 
             {/* Products Management */}
             <motion.div
@@ -388,14 +353,6 @@ function AdminDashboard() {
                             <motion.button
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
-                              className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
-                              title="View Product"
-                            >
-                              <Eye size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
                               onClick={() => openRestockModal(product)}
                               className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors"
                               title="Restock Product"
@@ -405,19 +362,16 @@ function AdminDashboard() {
                             <motion.button
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
-                              className="p-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition-colors"
-                              title="Edit Product"
-                            >
-                              <Edit size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
                               onClick={() => handleDeleteProduct(product.id)}
-                              className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                              className={`p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors ${deletingId === product.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title="Delete Product"
+                              disabled={deletingId === product.id}
                             >
-                              <Trash2 size={16} />
+                              {deletingId === product.id ? (
+                                <span className="animate-spin inline-block"><Trash2 size={16} /></span>
+                              ) : (
+                                <Trash2 size={16} />
+                              )}
                             </motion.button>
                           </div>
                         </td>
