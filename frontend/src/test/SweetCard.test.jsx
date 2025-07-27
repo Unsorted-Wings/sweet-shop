@@ -23,6 +23,7 @@ describe('SweetCard Component', () => {
         sweet={mockSweet}
         testId="test-card"
         buttonTestId="test-button"
+        index={0}
       />
     )
     
@@ -39,6 +40,7 @@ describe('SweetCard Component', () => {
         sweet={mockOutOfStockSweet}
         testId="out-of-stock-card"
         buttonTestId="out-of-stock-button"
+        index={0}
       />
     )
     
@@ -53,12 +55,13 @@ describe('SweetCard Component', () => {
         sweet={mockOutOfStockSweet}
         testId="out-of-stock-card"
         buttonTestId="out-of-stock-button"
+        index={0}
       />
     )
     
     const button = screen.getByTestId('out-of-stock-button')
     expect(button).toBeDisabled()
-    expect(button).toHaveTextContent('Purchase')
+    expect(button).toHaveTextContent('😔 Sold Out')
   })
 
   it('should enable purchase button when in stock', () => {
@@ -67,11 +70,12 @@ describe('SweetCard Component', () => {
         sweet={mockSweet}
         testId="in-stock-card"
         buttonTestId="in-stock-button"
+        index={0}
       />
     )
     
     const button = screen.getByTestId('in-stock-button')
     expect(button).not.toBeDisabled()
-    expect(button).toHaveTextContent('Purchase')
+    expect(button).toHaveTextContent('🛒 Add to Cart')
   })
 })
