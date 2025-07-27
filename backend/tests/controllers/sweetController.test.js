@@ -315,4 +315,193 @@ describe('SweetController', () => {
         .rejects.toThrow('Database connection failed');
     });
   });
+
+  describe('purchaseSweet', () => {
+    let mockSweetFindByIdAndUpdate;
+
+    beforeEach(() => {
+      mockSweetFindByIdAndUpdate = jest.fn();
+      mockSweet.findByIdAndUpdate = mockSweetFindByIdAndUpdate;
+    });
+
+    it('should purchase sweet successfully with default quantity', async () => {
+      const sweet = {
+        _id: 'sweet123',
+        name: 'Chocolate Cake',
+        price: 25.99,
+        category: 'cake',
+        quantity: 10
+      };
+
+      const updatedSweet = { ...sweet, quantity: 9 };
+
+      mockSweetFindById.mockResolvedValue(sweet);
+      mockSweetFindByIdAndUpdate.mockResolvedValue(updatedSweet);
+
+      const result = await SweetController.purchaseSweet('sweet123');
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Successfully purchased 1 unit of Chocolate Cake');
+      expect(result.sweet.quantity).toBe(9);
+      expect(result.purchaseDetails.quantityPurchased).toBe(1);
+      expect(result.purchaseDetails.remainingStock).toBe(9);
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalledWith(
+        'sweet123',
+        { $inc: { quantity: -1 } },
+        { new: true, runValidators: true }
+      );
+    });
+
+    it('should purchase sweet successfully with specified quantity', async () => {
+      const sweet = {
+        _id: 'sweet123',
+        name: 'Chocolate Cookies',
+        price: 15.99,
+        category: 'cookie',
+        quantity: 20
+      };
+
+      const updatedSweet = { ...sweet, quantity: 15 };
+
+      mockSweetFindById.mockResolvedValue(sweet);
+      mockSweetFindByIdAndUpdate.mockResolvedValue(updatedSweet);
+
+      const result = await SweetController.purchaseSweet('sweet123', 5);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Successfully purchased 5 units of Chocolate Cookies');
+      expect(result.sweet.quantity).toBe(15);
+      expect(result.purchaseDetails.quantityPurchased).toBe(5);
+      expect(result.purchaseDetails.remainingStock).toBe(15);
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalledWith(
+        'sweet123',
+        { $inc: { quantity: -5 } },
+        { new: true, runValidators: true }
+      );
+    });
+
+    it('should return null when sweet not found', async () => {
+      mockSweetFindById.mockResolvedValue(null);
+
+      const result = await SweetController.purchaseSweet('nonexistent123');
+
+      expect(result).toBeNull();
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for insufficient stock', async () => {
+      const sweet = {
+        _id: 'sweet123',
+        name: 'Chocolate Cake',
+        price: 25.99,
+        category: 'cake',
+        quantity: 3
+      };
+
+      mockSweetFindById.mockResolvedValue(sweet);
+
+      await expect(SweetController.purchaseSweet('sweet123', 5))
+        .rejects.toThrow('Insufficient stock. Available: 3, Requested: 5');
+      
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for invalid quantity (zero)', async () => {
+      await expect(SweetController.purchaseSweet('sweet123', 0))
+        .rejects.toThrow('Purchase quantity must be a positive integer');
+      
+      expect(mockSweetFindById).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for invalid quantity (negative)', async () => {
+      await expect(SweetController.purchaseSweet('sweet123', -1))
+        .rejects.toThrow('Purchase quantity must be a positive integer');
+      
+      expect(mockSweetFindById).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for invalid quantity (non-integer)', async () => {
+      await expect(SweetController.purchaseSweet('sweet123', 2.5))
+        .rejects.toThrow('Purchase quantity must be a positive integer');
+      
+      expect(mockSweetFindById).not.toHaveBeenCalled();
+    });
+
+    it('should handle database errors', async () => {
+      mockSweetFindById.mockRejectedValue(new Error('Database connection failed'));
+
+      await expect(SweetController.purchaseSweet('sweet123', 1))
+        .rejects.toThrow('Database connection failed');
+    });
+  });
+
+  describe('restockSweet', () => {
+    let mockSweetFindByIdAndUpdate;
+
+    beforeEach(() => {
+      mockSweetFindByIdAndUpdate = jest.fn();
+      mockSweet.findByIdAndUpdate = mockSweetFindByIdAndUpdate;
+    });
+
+    it('should restock sweet successfully', async () => {
+      const updatedSweet = {
+        _id: 'sweet123',
+        name: 'Chocolate Cake',
+        price: 25.99,
+        category: 'cake',
+        quantity: 15
+      };
+
+      mockSweetFindByIdAndUpdate.mockResolvedValue(updatedSweet);
+
+      const result = await SweetController.restockSweet('sweet123', 5);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Successfully restocked 5 units of Chocolate Cake');
+      expect(result.sweet.quantity).toBe(15);
+      expect(result.restockDetails.quantityAdded).toBe(5);
+      expect(result.restockDetails.newStock).toBe(15);
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalledWith(
+        'sweet123',
+        { $inc: { quantity: 5 } },
+        { new: true, runValidators: true }
+      );
+    });
+
+    it('should return null when sweet not found', async () => {
+      mockSweetFindByIdAndUpdate.mockResolvedValue(null);
+
+      const result = await SweetController.restockSweet('nonexistent123', 5);
+
+      expect(result).toBeNull();
+    });
+
+    it('should throw error for invalid quantity (zero)', async () => {
+      await expect(SweetController.restockSweet('sweet123', 0))
+        .rejects.toThrow('Restock quantity must be a positive integer');
+      
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for invalid quantity (negative)', async () => {
+      await expect(SweetController.restockSweet('sweet123', -1))
+        .rejects.toThrow('Restock quantity must be a positive integer');
+      
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw error for invalid quantity (non-integer)', async () => {
+      await expect(SweetController.restockSweet('sweet123', 2.5))
+        .rejects.toThrow('Restock quantity must be a positive integer');
+      
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should handle database errors', async () => {
+      mockSweetFindByIdAndUpdate.mockRejectedValue(new Error('Database connection failed'));
+
+      await expect(SweetController.restockSweet('sweet123', 5))
+        .rejects.toThrow('Database connection failed');
+    });
+  });
 });

@@ -195,4 +195,82 @@ export class SweetController {
       sweet
     };
   }
+
+  /**
+   * Purchase a sweet (decrease quantity)
+   * @param {string} id - Sweet ID
+   * @param {number} quantity - Quantity to purchase (default: 1)
+   * @returns {Object|null} Success response with updated sweet or null if not found
+   * @throws {Error} Validation or insufficient stock errors
+   */
+  static async purchaseSweet(id, quantity = 1) {
+    // Validate quantity
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error('Purchase quantity must be a positive integer');
+    }
+    
+    // Find the sweet first to check current stock
+    const sweet = await Sweet.findById(id);
+    
+    if (!sweet) {
+      return null;
+    }
+    
+    // Check if there's enough stock
+    if (sweet.quantity < quantity) {
+      throw new Error(`Insufficient stock. Available: ${sweet.quantity}, Requested: ${quantity}`);
+    }
+    
+    // Update the quantity
+    const updatedSweet = await Sweet.findByIdAndUpdate(
+      id,
+      { $inc: { quantity: -quantity } },
+      { new: true, runValidators: true }
+    );
+    
+    return {
+      success: true,
+      message: `Successfully purchased ${quantity} unit${quantity === 1 ? '' : 's'} of ${updatedSweet.name}`,
+      sweet: updatedSweet,
+      purchaseDetails: {
+        quantityPurchased: quantity,
+        remainingStock: updatedSweet.quantity
+      }
+    };
+  }
+
+  /**
+   * Restock a sweet (increase quantity) - Admin only
+   * @param {string} id - Sweet ID
+   * @param {number} quantity - Quantity to restock
+   * @returns {Object|null} Success response with updated sweet or null if not found
+   * @throws {Error} Validation errors
+   */
+  static async restockSweet(id, quantity) {
+    // Validate quantity
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error('Restock quantity must be a positive integer');
+    }
+    
+    // Update the quantity
+    const updatedSweet = await Sweet.findByIdAndUpdate(
+      id,
+      { $inc: { quantity: quantity } },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedSweet) {
+      return null;
+    }
+    
+    return {
+      success: true,
+      message: `Successfully restocked ${quantity} unit${quantity === 1 ? '' : 's'} of ${updatedSweet.name}`,
+      sweet: updatedSweet,
+      restockDetails: {
+        quantityAdded: quantity,
+        newStock: updatedSweet.quantity
+      }
+    };
+  }
 }

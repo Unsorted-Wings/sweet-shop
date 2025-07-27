@@ -921,4 +921,303 @@ describe('Sweet API Endpoints', () => {
       expect(response.body.error).toBe('Internal server error');
     });
   });
+
+  describe('POST /api/sweets/:id/purchase', () => {
+    const sweetId = '6123456789abcdef12345678';
+    let mockSweetFindByIdAndUpdate;
+
+    beforeEach(() => {
+      mockSweetFindByIdAndUpdate = jest.fn();
+      mockSweet.findByIdAndUpdate = mockSweetFindByIdAndUpdate;
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should purchase sweet successfully with default quantity (customer)', async () => {
+      const sweet = {
+        _id: sweetId,
+        name: 'Chocolate Cake',
+        price: 25.99,
+        category: 'cake',
+        quantity: 10
+      };
+
+      const updatedSweet = { ...sweet, quantity: 9 };
+
+      mockSweetFindById.mockResolvedValue(sweet);
+      mockSweetFindByIdAndUpdate.mockResolvedValue(updatedSweet);
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Successfully purchased 1 unit of Chocolate Cake');
+      expect(response.body.sweet.quantity).toBe(9);
+      expect(response.body.purchaseDetails.quantityPurchased).toBe(1);
+      expect(response.body.purchaseDetails.remainingStock).toBe(9);
+    });
+
+    it('should purchase sweet successfully with specified quantity (admin)', async () => {
+      const sweet = {
+        _id: sweetId,
+        name: 'Chocolate Cookies',
+        price: 15.99,
+        category: 'cookie',
+        quantity: 20
+      };
+
+      const updatedSweet = { ...sweet, quantity: 15 };
+
+      mockSweetFindById.mockResolvedValue(sweet);
+      mockSweetFindByIdAndUpdate.mockResolvedValue(updatedSweet);
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ quantity: 5 })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Successfully purchased 5 units of Chocolate Cookies');
+      expect(response.body.sweet.quantity).toBe(15);
+      expect(response.body.purchaseDetails.quantityPurchased).toBe(5);
+      expect(response.body.purchaseDetails.remainingStock).toBe(15);
+    });
+
+    it('should return 404 when sweet not found', async () => {
+      mockSweetFindById.mockResolvedValue(null);
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(404);
+
+      expect(response.body.error).toBe('Sweet not found');
+    });
+
+    it('should return 400 for insufficient stock', async () => {
+      const sweet = {
+        _id: sweetId,
+        name: 'Chocolate Cake',
+        price: 25.99,
+        category: 'cake',
+        quantity: 3
+      };
+
+      mockSweetFindById.mockResolvedValue(sweet);
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({ quantity: 5 })
+        .expect(400);
+
+      expect(response.body.error).toBe('Insufficient stock. Available: 3, Requested: 5');
+    });
+
+    it('should return 400 for invalid quantity (zero)', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({ quantity: 0 })
+        .expect(400);
+
+      expect(response.body.error).toBe('Purchase quantity must be a positive integer');
+      expect(mockSweetFindById).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 for invalid quantity (negative)', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({ quantity: -1 })
+        .expect(400);
+
+      expect(response.body.error).toBe('Purchase quantity must be a positive integer');
+      expect(mockSweetFindById).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 for invalid quantity (non-integer)', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({ quantity: 2.5 })
+        .expect(400);
+
+      expect(response.body.error).toBe('Purchase quantity must be a positive integer');
+      expect(mockSweetFindById).not.toHaveBeenCalled();
+    });
+
+    it('should return 401 when no authentication token provided', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .expect(401);
+
+      expect(response.body.error).toBe('Access token is required');
+      expect(mockSweetFindById).not.toHaveBeenCalled();
+    });
+
+    it('should return 401 with invalid authentication token', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', 'Bearer invalid-token')
+        .expect(401);
+
+      expect(response.body.error).toBe('Invalid or expired token');
+      expect(mockSweetFindById).not.toHaveBeenCalled();
+    });
+
+    it('should handle database errors gracefully', async () => {
+      mockSweetFindById.mockRejectedValue(new Error('Database connection failed'));
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/purchase`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(500);
+
+      expect(response.body.error).toBe('Internal server error');
+    });
+  });
+
+  describe('POST /api/sweets/:id/restock', () => {
+    const sweetId = '6123456789abcdef12345678';
+    let mockSweetFindByIdAndUpdate;
+
+    beforeEach(() => {
+      mockSweetFindByIdAndUpdate = jest.fn();
+      mockSweet.findByIdAndUpdate = mockSweetFindByIdAndUpdate;
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should restock sweet successfully when admin is authenticated', async () => {
+      const updatedSweet = {
+        _id: sweetId,
+        name: 'Chocolate Cake',
+        price: 25.99,
+        category: 'cake',
+        quantity: 15
+      };
+
+      mockSweetFindByIdAndUpdate.mockResolvedValue(updatedSweet);
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ quantity: 5 })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Successfully restocked 5 units of Chocolate Cake');
+      expect(response.body.sweet.quantity).toBe(15);
+      expect(response.body.restockDetails.quantityAdded).toBe(5);
+      expect(response.body.restockDetails.newStock).toBe(15);
+    });
+
+    it('should return 404 when sweet not found', async () => {
+      mockSweetFindByIdAndUpdate.mockResolvedValue(null);
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ quantity: 5 })
+        .expect(404);
+
+      expect(response.body.error).toBe('Sweet not found');
+    });
+
+    it('should return 400 when quantity is missing', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({})
+        .expect(400);
+
+      expect(response.body.error).toBe('Quantity is required for restocking');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 for invalid quantity (zero)', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ quantity: 0 })
+        .expect(400);
+
+      expect(response.body.error).toBe('Restock quantity must be a positive integer');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 for invalid quantity (negative)', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ quantity: -1 })
+        .expect(400);
+
+      expect(response.body.error).toBe('Restock quantity must be a positive integer');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 for invalid quantity (non-integer)', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ quantity: 2.5 })
+        .expect(400);
+
+      expect(response.body.error).toBe('Restock quantity must be a positive integer');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should return 401 when no authentication token provided', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .send({ quantity: 5 })
+        .expect(401);
+
+      expect(response.body.error).toBe('Access token is required');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should return 403 when customer tries to restock sweet', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({ quantity: 5 })
+        .expect(403);
+
+      expect(response.body.error).toBe('Access denied. admin role required');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should return 401 with invalid authentication token', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', 'Bearer invalid-token')
+        .send({ quantity: 5 })
+        .expect(401);
+
+      expect(response.body.error).toBe('Invalid or expired token');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should handle database errors gracefully', async () => {
+      mockSweetFindByIdAndUpdate.mockRejectedValue(new Error('Database connection failed'));
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ quantity: 5 })
+        .expect(500);
+
+      expect(response.body.error).toBe('Internal server error');
+    });
+  });
 });

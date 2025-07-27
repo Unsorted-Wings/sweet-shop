@@ -154,4 +154,79 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/sweets/:id/purchase
+ * Purchase a sweet, decreasing its quantity
+ * Requires authentication (both customer and admin can purchase)
+ */
+router.post('/:id/purchase', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity = 1 } = req.body || {};
+    
+    const result = await SweetController.purchaseSweet(id, quantity);
+    
+    if (!result) {
+      return res.status(404).json({
+        error: 'Sweet not found'
+      });
+    }
+    
+    res.status(200).json(result);
+  } catch (error) {
+    // Handle validation errors and insufficient stock
+    if (error.message.includes('quantity must be a positive integer') ||
+        error.message.includes('Insufficient stock')) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+    
+    console.error('Error purchasing sweet:', error);
+    res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * POST /api/sweets/:id/restock
+ * Restock a sweet, increasing its quantity
+ * Requires admin authentication
+ */
+router.post('/:id/restock', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body || {};
+    
+    if (quantity === undefined || quantity === null) {
+      return res.status(400).json({
+        error: 'Quantity is required for restocking'
+      });
+    }
+    
+    const result = await SweetController.restockSweet(id, quantity);
+    
+    if (!result) {
+      return res.status(404).json({
+        error: 'Sweet not found'
+      });
+    }
+    
+    res.status(200).json(result);
+  } catch (error) {
+    // Handle validation errors
+    if (error.message.includes('quantity must be a positive integer')) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+    
+    console.error('Error restocking sweet:', error);
+    res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
+});
+
 export default router;
