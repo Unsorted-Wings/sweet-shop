@@ -399,4 +399,211 @@ describe('Sweet API Endpoints', () => {
       expect(mockSortedQuery.sort).toHaveBeenCalledWith({ price: 1 });
     });
   });
+
+  describe('PUT /api/sweets/:id', () => {
+    const validUpdateData = {
+      name: 'Updated Chocolate Cake',
+      price: 29.99,
+      category: 'cake'
+      // quantity should NOT be updatable via PUT - use restock/purchase endpoints instead
+    };
+
+    const mockUpdatedSweet = {
+      _id: 'sweet123',
+      ...validUpdateData,
+      quantity: 10, // quantity remains unchanged from original
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date()
+    };
+
+    it('should update a sweet with valid data and admin token', async () => {
+      mockSweetFindByIdAndUpdate.mockResolvedValue(mockUpdatedSweet);
+
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(validUpdateData)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Sweet updated successfully');
+      expect(response.body.sweet.name).toBe(validUpdateData.name);
+      expect(response.body.sweet.price).toBe(validUpdateData.price);
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalledWith(
+        'sweet123',
+        validUpdateData,
+        { new: true, runValidators: true }
+      );
+    });
+
+    it('should reject customer access (403 Forbidden)', async () => {
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send(validUpdateData)
+        .expect(403);
+
+      expect(response.body.error).toBe('Access denied. admin role required');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should reject request without authentication', async () => {
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .send(validUpdateData)
+        .expect(401);
+
+      expect(response.body.error).toBe('Access token is required');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should reject request with invalid token', async () => {
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', 'Bearer invalid-token')
+        .send(validUpdateData)
+        .expect(401);
+
+      expect(response.body.error).toBe('Invalid or expired token');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should return 404 when sweet not found', async () => {
+      mockSweetFindByIdAndUpdate.mockResolvedValue(null);
+
+      const response = await request(app)
+        .put('/api/sweets/nonexistent123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(validUpdateData)
+        .expect(404);
+
+      expect(response.body.error).toBe('Sweet not found');
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalledWith(
+        'nonexistent123',
+        validUpdateData,
+        { new: true, runValidators: true }
+      );
+    });
+
+    it('should return 400 for invalid price', async () => {
+      const invalidData = {
+        ...validUpdateData,
+        price: -10
+      };
+
+      // Mock validation error from Mongoose
+      const validationError = new Error('Validation failed: price: Price must be greater than 0');
+      validationError.name = 'ValidationError';
+      mockSweetFindByIdAndUpdate.mockRejectedValue(validationError);
+
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(invalidData)
+        .expect(400);
+
+      expect(response.body.error).toContain('Validation failed');
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalled();
+    });
+
+    it('should return 400 for invalid category', async () => {
+      const invalidData = {
+        ...validUpdateData,
+        category: 'invalid-category'
+      };
+
+      const validationError = new Error('Validation failed: category: Invalid category');
+      validationError.name = 'ValidationError';
+      mockSweetFindByIdAndUpdate.mockRejectedValue(validationError);
+
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(invalidData)
+        .expect(400);
+
+      expect(response.body.error).toContain('Validation failed');
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalled();
+    });
+
+    it('should return 400 for negative quantity', async () => {
+      const invalidData = {
+        ...validUpdateData,
+        quantity: -5 // This should be rejected since quantity shouldn't be updatable
+      };
+
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(invalidData)
+        .expect(400);
+
+      expect(response.body.error).toBe('Quantity cannot be updated via PUT. Use restock/purchase endpoints.');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should reject any quantity updates', async () => {
+      const invalidData = {
+        ...validUpdateData,
+        quantity: 20 // Even positive quantity should be rejected
+      };
+
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(invalidData)
+        .expect(400);
+
+      expect(response.body.error).toBe('Quantity cannot be updated via PUT. Use restock/purchase endpoints.');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should allow partial updates (only price)', async () => {
+      const partialUpdateData = { price: 35.99 };
+      const partiallyUpdatedSweet = {
+        ...mockUpdatedSweet,
+        price: 35.99
+      };
+
+      mockSweetFindByIdAndUpdate.mockResolvedValue(partiallyUpdatedSweet);
+
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(partialUpdateData)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweet.price).toBe(35.99);
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalledWith(
+        'sweet123',
+        partialUpdateData,
+        { new: true, runValidators: true }
+      );
+    });
+
+    it('should handle database errors gracefully', async () => {
+      mockSweetFindByIdAndUpdate.mockRejectedValue(new Error('Database connection failed'));
+
+      const response = await request(app)
+        .put('/api/sweets/sweet123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(validUpdateData)
+        .expect(500);
+
+      expect(response.body.error).toBe('Internal server error');
+      expect(mockSweetFindByIdAndUpdate).toHaveBeenCalled();
+    });
+
+    it('should return 400 for invalid ObjectId format', async () => {
+      const response = await request(app)
+        .put('/api/sweets/invalid-id-format')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(validUpdateData)
+        .expect(400);
+
+      expect(response.body.error).toBe('Invalid sweet ID format');
+      expect(mockSweetFindByIdAndUpdate).not.toHaveBeenCalled();
+    });
+  });
 });
