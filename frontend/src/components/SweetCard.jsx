@@ -91,8 +91,8 @@ function SweetCard({ sweet, testId, buttonTestId, index, onPurchaseSuccess }) {
 
     try {
       setPurchasing(true);
-      // Always use sweet.id for purchase
-      await sweetAPI.purchase(sweet.id, 1);
+      // Always use sweet._id for purchase
+      await sweetAPI.purchase(sweet._id, 1);
 
       // Show success message
       alert(`Successfully purchased ${sweet.name}! 🎉`);
