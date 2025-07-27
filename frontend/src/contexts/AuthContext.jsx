@@ -137,6 +137,8 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const clearError = () => setError(null)
+
   const value = {
     user,
     loading,
@@ -145,6 +147,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
+    clearError,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin'
   }

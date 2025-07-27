@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { sweetAPI } from '../services/api'
+import toast from 'react-hot-toast'
 
 const cardVariants = {
   hidden: { 
@@ -83,7 +84,7 @@ function SweetCard({ sweet, testId, buttonTestId, index, onPurchaseSuccess }) {
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      alert('Please log in to purchase sweets!');
+      toast.error('Please log in to purchase sweets!');
       return;
     }
 
@@ -95,7 +96,7 @@ function SweetCard({ sweet, testId, buttonTestId, index, onPurchaseSuccess }) {
       await sweetAPI.purchase(sweet._id, 1);
 
       // Show success message
-      alert(`Successfully purchased ${sweet.name}! 🎉`);
+      toast.success(`Successfully purchased ${sweet.name}! 🎉`);
 
       // Notify parent component to refresh data
       if (onPurchaseSuccess) {
@@ -105,11 +106,11 @@ function SweetCard({ sweet, testId, buttonTestId, index, onPurchaseSuccess }) {
       // Log more details for debugging
       console.error('Purchase failed:', error, error?.response?.data);
       if (error.response?.status === 401) {
-        alert('Please log in to purchase sweets!');
+        toast.error('Please log in to purchase sweets!');
       } else if (error.response?.status === 400) {
-        alert(error.response?.data?.error || 'Insufficient stock!');
+        toast.error(error.response?.data?.error || 'Insufficient stock!');
       } else {
-        alert('Purchase failed. Please try again.');
+        toast.error('Purchase failed. Please try again.');
       }
     } finally {
       setPurchasing(false);

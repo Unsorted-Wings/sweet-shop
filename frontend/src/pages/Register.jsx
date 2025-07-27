@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, Phone } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import toast from 'react-hot-toast'
 
 const pageVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -36,7 +37,11 @@ function Register() {
   const [isLoading, setIsLoading] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
   
-  const { register, error } = useAuth()
+  const { register, error, clearError } = useAuth()
+  // Clear any lingering auth error (e.g., from Login page) on mount
+  useEffect(() => {
+    clearError && clearError()
+  }, [clearError])
   const navigate = useNavigate()
 
   const handleChange = (e) => {
@@ -99,6 +104,7 @@ function Register() {
     })
     
     if (result.success) {
+      toast.success('Registration successful!')
       navigate('/')
     }
     

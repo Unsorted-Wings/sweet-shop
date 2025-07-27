@@ -7,6 +7,7 @@ import AddProductModal from '../components/AddProductModal';
 import RestockModal from '../components/RestockModal';
 import { useAuth } from '../contexts/AuthContext'
 import { sweetAPI } from '../services/api'
+import toast from 'react-hot-toast'
 import EditProductModal from '../components/EditProductModal';
 
 const pageVariants = {
@@ -99,14 +100,13 @@ function AdminDashboard() {
       if (response) {
         // Refresh products and stats from backend
         await fetchDashboardData();
-        // Reset form and close modal
         setNewProduct({ name: '', price: '', category: '', quantity: '' });
         setShowAddModal(false);
-        alert('Product added successfully!');
+        toast.success('Product added!');
       }
     } catch (error) {
       console.error('Failed to add product:', error);
-      alert('Failed to add product. Please try again.');
+      toast.error('Failed to add product. Please try again.');
     }
   }
 
@@ -118,15 +118,14 @@ function AdminDashboard() {
       if (response) {
         // Refresh products and stats from backend
         await fetchDashboardData();
-        // Reset form and close modal
         setSelectedProduct(null);
         setRestockQuantity('');
         setShowRestockModal(false);
-        alert('Product restocked successfully!');
+        toast.success('Product restocked!');
       }
     } catch (error) {
       console.error('Failed to restock product:', error);
-      alert('Failed to restock product. Please try again.');
+      toast.error('Failed to restock product. Please try again.');
     }
   }
 
@@ -145,14 +144,13 @@ function AdminDashboard() {
       if (response) {
         // Refresh products and stats from backend
         await fetchDashboardData();
-        // Reset form and close modal
         setSelectedProduct(null);
         setShowEditModal(false);
-        alert('Product updated successfully!');
+        toast.success('Product updated!');
       }
     } catch (error) {
       console.error('Failed to update product:', error);
-      alert('Failed to update product. Please try again.');
+      toast.error('Failed to update product. Please try again.');
     }
   }
   

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
 const EditProductModal = ({ show, product, setProduct, onClose, onSubmit }) => {
@@ -10,6 +11,7 @@ const EditProductModal = ({ show, product, setProduct, onClose, onSubmit }) => {
     setLoading(true);
     try {
       await onSubmit(e);
+      toast.success('Product updated!');
     } finally {
       setLoading(false);
     }

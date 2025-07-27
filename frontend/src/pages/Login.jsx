@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import toast from 'react-hot-toast'
 
 const pageVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -50,6 +51,7 @@ function Login() {
     const result = await login(formData.email, formData.password)
     
     if (result.success) {
+      toast.success('Logged in!')
       navigate(from, { replace: true })
     }
     

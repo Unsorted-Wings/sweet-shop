@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
 const RestockModal = ({ show, selectedProduct, restockQuantity, setRestockQuantity, onClose, onSubmit }) => {
@@ -10,6 +11,7 @@ const RestockModal = ({ show, selectedProduct, restockQuantity, setRestockQuanti
     setLoading(true);
     try {
       await onSubmit(e);
+      toast.success('Product restocked!');
     } finally {
       setLoading(false);
     }

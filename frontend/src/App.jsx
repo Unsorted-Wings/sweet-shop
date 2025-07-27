@@ -1,4 +1,5 @@
 import React from 'react'
+import { Toaster } from 'react-hot-toast'
 import './App.css'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -71,6 +72,18 @@ function App() {
         <div className="absolute inset-0 bg-white/5 backdrop-blur-sm"></div>
 
         <div className="relative z-10">
+          <Toaster position="top-center" toastOptions={{
+            style: {
+              background: 'rgba(30, 27, 75, 0.85)',
+              color: '#fff',
+              borderRadius: '1rem',
+              boxShadow: '0 4px 32px 0 rgba(0,0,0,0.15)',
+              fontSize: '1rem',
+              backdropFilter: 'blur(8px)'
+            },
+            success: { iconTheme: { primary: '#a21caf', secondary: '#fff' } },
+            error: { iconTheme: { primary: '#e11d48', secondary: '#fff' } }
+          }} />
           <Navigation />
           
           <Routes>
