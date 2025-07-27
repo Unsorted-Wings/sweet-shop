@@ -6,6 +6,7 @@ function App() {
     <div className="App">
       <nav>
         <a href="/">Home</a>
+        <a href="/sweets">Browse Sweets</a>
       </nav>
       <h1>Sweet Shop</h1>
     </div>
