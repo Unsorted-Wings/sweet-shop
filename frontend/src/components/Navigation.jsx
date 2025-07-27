@@ -60,22 +60,24 @@ function Navigation() {
       animate="visible"
     >
       <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex flex-wrap gap-8 items-center justify-between">
-          {/* Logo */}
-          <Link to="/">
-            <motion.div
-              className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400"
-              whileHover={{ scale: 1.05 }}
-            >
-              🍭 Sweet Shop
-            </motion.div>
-          </Link>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {/* Left: Logo */}
+          <div className="flex-1 min-w-[120px] flex items-center">
+            <Link to="/">
+              <motion.div
+                className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-300 hover:to-purple-300 transition-colors duration-300 select-none"
+                whileHover={{ scale: 1.08 }}
+              >
+                🍭 Sweet Shop
+              </motion.div>
+            </Link>
+          </div>
 
-          {/* Navigation Links */}
-          <div className="flex gap-6 items-center">
+          {/* Center: Nav Links */}
+          <div className="flex-1 flex justify-center items-center gap-2 md:gap-6">
             <Link to="/">
               <motion.div 
-                className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border ${
+                className={`group px-5 py-2 rounded-xl font-semibold transition-all duration-300 backdrop-blur-md border shadow-sm ${
                   isActive('/') 
                     ? 'text-white bg-white/20 border-white/30' 
                     : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
@@ -85,16 +87,15 @@ function Navigation() {
                 whileHover="hover"
                 whileTap="tap"
               >
-                <span className="flex items-center gap-3">
+                <span className="flex items-center gap-2">
                   <motion.span variants={iconFloat} animate="animate">🏠</motion.span>
                   <span>Home</span>
                 </span>
               </motion.div>
             </Link>
-            
             <Link to="/about">
               <motion.div 
-                className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border ${
+                className={`group px-5 py-2 rounded-xl font-semibold transition-all duration-300 backdrop-blur-md border shadow-sm ${
                   isActive('/about') 
                     ? 'text-white bg-white/20 border-white/30' 
                     : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
@@ -104,7 +105,7 @@ function Navigation() {
                 whileHover="hover"
                 whileTap="tap"
               >
-                <span className="flex items-center gap-3">
+                <span className="flex items-center gap-2">
                   <motion.span 
                     variants={iconFloat} 
                     animate="animate"
@@ -116,62 +117,56 @@ function Navigation() {
                 </span>
               </motion.div>
             </Link>
+            {isAuthenticated && isAdmin && (
+              <Link to="/admin">
+                <motion.div 
+                  className={`group px-5 py-2 rounded-xl font-semibold transition-all duration-300 backdrop-blur-md border shadow-sm ${
+                    isActive('/admin') 
+                      ? 'text-white bg-white/20 border-white/30' 
+                      : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
+                  }`}
+                  variants={linkVariants}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  <span className="flex items-center gap-2">
+                    <motion.span 
+                      variants={iconFloat} 
+                      animate="animate"
+                      style={{ animationDelay: "1.5s" }}
+                    >
+                      <Settings size={18} />
+                    </motion.span>
+                    <span>Admin</span>
+                  </span>
+                </motion.div>
+              </Link>
+            )}
+          </div>
 
-            {/* Auth-dependent links */}
+          {/* Right: Auth Links or Greeting */}
+          <div className="flex-1 flex justify-end items-center gap-2 md:gap-4 min-w-[180px]">
             {isAuthenticated ? (
               <>
-                {/* Admin Dashboard Link */}
-                {isAdmin && (
-                  <Link to="/admin">
-                    <motion.div 
-                      className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border ${
-                        isActive('/admin') 
-                          ? 'text-white bg-white/20 border-white/30' 
-                          : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
-                      }`}
-                      variants={linkVariants}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      <span className="flex items-center gap-3">
-                        <motion.span 
-                          variants={iconFloat} 
-                          animate="animate"
-                          style={{ animationDelay: "1.5s" }}
-                        >
-                          <Settings size={18} />
-                        </motion.span>
-                        <span>Admin</span>
-                      </span>
-                    </motion.div>
-                  </Link>
-                )}
-
-                {/* User Menu */}
-                <div className="flex items-center gap-4">
-                  <span className="text-white/80 text-sm">Welcome, {user?.name || user?.email}</span>
-                  <motion.button
-                    onClick={handleLogout}
-                    className="group px-4 py-2 rounded-xl font-semibold transition-all duration-300 backdrop-blur-md border text-white/90 hover:text-white hover:bg-red-500/20 border-transparent hover:border-red-400/30"
-                    variants={linkVariants}
-                    initial="rest"
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <span className="flex items-center gap-2">
-                      <LogOut size={16} />
-                      <span>Logout</span>
-                    </span>
-                  </motion.button>
-                </div>
+                <span className="hidden sm:inline text-white/80 text-sm mr-2">Hi, {user?.name || user?.email}</span>
+                <motion.button
+                  onClick={handleLogout}
+                  className="group px-4 py-2 rounded-xl font-semibold transition-all duration-300 backdrop-blur-md border text-white/90 hover:text-white hover:bg-red-500/20 border-transparent hover:border-red-400/30 flex items-center gap-2"
+                  variants={linkVariants}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </motion.button>
               </>
             ) : (
               <>
-                {/* Login/Register Links for non-authenticated users */}
                 <Link to="/login">
                   <motion.div 
-                    className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border ${
+                    className={`group px-5 py-2 rounded-xl font-semibold transition-all duration-300 backdrop-blur-md border shadow-sm ${
                       isActive('/login') 
                         ? 'text-white bg-white/20 border-white/30' 
                         : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
@@ -181,7 +176,7 @@ function Navigation() {
                     whileHover="hover"
                     whileTap="tap"
                   >
-                    <span className="flex items-center gap-3">
+                    <span className="flex items-center gap-2">
                       <motion.span 
                         variants={iconFloat} 
                         animate="animate"
@@ -193,16 +188,15 @@ function Navigation() {
                     </span>
                   </motion.div>
                 </Link>
-
                 <Link to="/register">
                   <motion.div 
-                    className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-pink-400/30 text-white hover:from-pink-500/30 hover:to-purple-500/30 hover:border-pink-400/50`}
+                    className="group px-5 py-2 rounded-xl font-semibold transition-all duration-300 backdrop-blur-md border bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-pink-400/30 text-white hover:from-pink-500/30 hover:to-purple-500/30 hover:border-pink-400/50 shadow-sm"
                     variants={linkVariants}
                     initial="rest"
                     whileHover="hover"
                     whileTap="tap"
                   >
-                    <span className="flex items-center gap-3">
+                    <span className="flex items-center gap-2">
                       <motion.span 
                         variants={iconFloat} 
                         animate="animate"

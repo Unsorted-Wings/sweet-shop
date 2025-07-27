@@ -119,12 +119,14 @@ function SweetCard({ sweet, testId, buttonTestId, index, onPurchaseSuccess }) {
   // Get sweet emoji based on name
   const getSweetEmoji = (name) => {
     if (name.toLowerCase().includes('chocolate')) return '🍫'
+    if (name.toLowerCase().includes('candy')) return '🍬'
     if (name.toLowerCase().includes('cake')) return '🎂'
     if (name.toLowerCase().includes('cupcake')) return '🧁'
     if (name.toLowerCase().includes('cookie')) return '🍪'
     if (name.toLowerCase().includes('tart')) return '🥧'
     if (name.toLowerCase().includes('strawberry')) return '🍓'
-    return '🍰'
+    return '🍨'
+
   }
 
   const getGradientColors = (index) => {
