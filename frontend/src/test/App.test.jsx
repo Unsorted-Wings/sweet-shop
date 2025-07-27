@@ -26,4 +26,10 @@ describe('App Component', () => {
     
     expect(screen.getByRole('link', { name: /search/i })).toBeInTheDocument()
   })
+
+  it('should render sweets list section', () => {
+    render(<App />)
+    
+    expect(screen.getByTestId('sweets-list')).toBeInTheDocument()
+  })
 })
