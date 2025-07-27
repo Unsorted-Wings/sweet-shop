@@ -63,13 +63,31 @@ root/
 3. Start the dev server: `npm start`
 
 ### Environment Variables
-- Configure API base URLs and any secrets in a `.env` file if needed (see `.env.example`).
+- Configure API base URLs and any secrets in a `.env`.
+
+#### Backend `.env` example
+```
+MONGODB_URI="your mongodb uri"
+
+# JWT Secret for token generation
+JWT_SECRET="your-super-secret-jwt-key"
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# CORS Configuration - comma-separated list of allowed origins
+CORS_ORIGIN="yourcors"
+```
+
+#### Frontend `.env` example
+```
+VITE_API_BASE_URL="your-vite-api-base-key"
+```
 
 ---
 
 ## Screenshots
-
-Add screenshots of your application in action to `frontend/public/screenshots/` and reference them below:
 
 ```
 ![Home Page](frontend/public/screenshots/home.png)
