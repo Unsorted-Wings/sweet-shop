@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "license": "MIT",
   "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "format": "prettier --write .",
     "lint": "eslint ."
@@ -14,6 +16,7 @@
   "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",

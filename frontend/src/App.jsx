@@ -2,21 +2,27 @@ import React from 'react'
 import './App.css'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { AuthProvider } from './contexts/AuthContext'
 import Navigation from './components/Navigation'
 import Home from './pages/Home'
 import SweetDetail from './pages/SweetDetail'
 import Cart from './pages/Cart'
 import About from './pages/About'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import AdminDashboard from './pages/AdminDashboard'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
-    <Router>
-      <motion.div 
-        className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      >
+    <AuthProvider>
+      <Router>
+        <motion.div 
+          className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        >
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div 
@@ -73,6 +79,13 @@ function App() {
             <Route path="/sweet/:id" element={<SweetDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/about" element={<About />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/admin" element={
+              <ProtectedRoute adminOnly>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
           </Routes>
           
           {/* Footer */}
@@ -87,6 +100,7 @@ function App() {
         </div>
       </motion.div>
     </Router>
+    </AuthProvider>
   )
 }
 

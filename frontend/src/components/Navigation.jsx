@@ -1,7 +1,8 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, User, LogOut, Settings } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 const navVariants = {
   hidden: { y: -100, opacity: 0 },
@@ -43,8 +44,13 @@ const iconFloat = {
 
 function Navigation() {
   const location = useLocation()
+  const { user, isAuthenticated, isAdmin, logout } = useAuth()
   
   const isActive = (path) => location.pathname === path
+
+  const handleLogout = async () => {
+    await logout()
+  }
 
   return (
     <motion.nav 
@@ -110,39 +116,139 @@ function Navigation() {
                 </span>
               </motion.div>
             </Link>
-            
-            <Link to="/cart">
-              <motion.div 
-                className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border relative ${
-                  isActive('/cart') 
-                    ? 'text-white bg-white/20 border-white/30' 
-                    : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
-                }`}
-                variants={linkVariants}
-                initial="rest"
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <span className="flex items-center gap-3">
-                  <motion.span 
-                    variants={iconFloat} 
-                    animate="animate"
-                    style={{ animationDelay: "1s" }}
+
+            {/* Auth-dependent links */}
+            {isAuthenticated ? (
+              <>
+                <Link to="/cart">
+                  <motion.div 
+                    className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border relative ${
+                      isActive('/cart') 
+                        ? 'text-white bg-white/20 border-white/30' 
+                        : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
+                    }`}
+                    variants={linkVariants}
+                    initial="rest"
+                    whileHover="hover"
+                    whileTap="tap"
                   >
-                    <ShoppingCart size={18} />
-                  </motion.span>
-                  <span>Cart</span>
-                </span>
-                {/* Cart badge */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-2 -right-2 w-5 h-5 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center"
-                >
-                  3
-                </motion.div>
-              </motion.div>
-            </Link>
+                    <span className="flex items-center gap-3">
+                      <motion.span 
+                        variants={iconFloat} 
+                        animate="animate"
+                        style={{ animationDelay: "1s" }}
+                      >
+                        <ShoppingCart size={18} />
+                      </motion.span>
+                      <span>Cart</span>
+                    </span>
+                    {/* Cart badge */}
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center"
+                    >
+                      3
+                    </motion.div>
+                  </motion.div>
+                </Link>
+
+                {/* Admin Dashboard Link */}
+                {isAdmin && (
+                  <Link to="/admin">
+                    <motion.div 
+                      className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border ${
+                        isActive('/admin') 
+                          ? 'text-white bg-white/20 border-white/30' 
+                          : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
+                      }`}
+                      variants={linkVariants}
+                      initial="rest"
+                      whileHover="hover"
+                      whileTap="tap"
+                    >
+                      <span className="flex items-center gap-3">
+                        <motion.span 
+                          variants={iconFloat} 
+                          animate="animate"
+                          style={{ animationDelay: "1.5s" }}
+                        >
+                          <Settings size={18} />
+                        </motion.span>
+                        <span>Admin</span>
+                      </span>
+                    </motion.div>
+                  </Link>
+                )}
+
+                {/* User Menu */}
+                <div className="flex items-center gap-4">
+                  <span className="text-white/80 text-sm">Welcome, {user?.name || user?.email}</span>
+                  <motion.button
+                    onClick={handleLogout}
+                    className="group px-4 py-2 rounded-xl font-semibold transition-all duration-300 backdrop-blur-md border text-white/90 hover:text-white hover:bg-red-500/20 border-transparent hover:border-red-400/30"
+                    variants={linkVariants}
+                    initial="rest"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <span className="flex items-center gap-2">
+                      <LogOut size={16} />
+                      <span>Logout</span>
+                    </span>
+                  </motion.button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Login/Register Links for non-authenticated users */}
+                <Link to="/login">
+                  <motion.div 
+                    className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border ${
+                      isActive('/login') 
+                        ? 'text-white bg-white/20 border-white/30' 
+                        : 'text-white/90 hover:text-white hover:bg-white/10 border-transparent hover:border-white/20'
+                    }`}
+                    variants={linkVariants}
+                    initial="rest"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <span className="flex items-center gap-3">
+                      <motion.span 
+                        variants={iconFloat} 
+                        animate="animate"
+                        style={{ animationDelay: "1s" }}
+                      >
+                        <User size={18} />
+                      </motion.span>
+                      <span>Login</span>
+                    </span>
+                  </motion.div>
+                </Link>
+
+                <Link to="/register">
+                  <motion.div 
+                    className={`group px-6 py-3 rounded-2xl font-semibold transition-all duration-300 backdrop-blur-md border bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-pink-400/30 text-white hover:from-pink-500/30 hover:to-purple-500/30 hover:border-pink-400/50`}
+                    variants={linkVariants}
+                    initial="rest"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <span className="flex items-center gap-3">
+                      <motion.span 
+                        variants={iconFloat} 
+                        animate="animate"
+                        style={{ animationDelay: "1.5s" }}
+                      >
+                        ✨
+                      </motion.span>
+                      <span>Register</span>
+                    </span>
+                  </motion.div>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

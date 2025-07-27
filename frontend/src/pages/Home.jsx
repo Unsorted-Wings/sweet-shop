@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import SweetsList from '../components/SweetsList'
+import { sweetAPI } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 import { SAMPLE_SWEETS } from '../data/sweets'
 
 const containerVariants = {
@@ -28,6 +31,34 @@ const heroVariants = {
 }
 
 function Home() {
+  const [sweets, setSweets] = useState(SAMPLE_SWEETS) // Fallback to sample data
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const { isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    // Only fetch from backend if user is authenticated
+    if (isAuthenticated) {
+      fetchSweets()
+    }
+  }, [isAuthenticated])
+
+  const fetchSweets = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await sweetAPI.getAll()
+      if (response && response.sweets && response.sweets.length > 0) {
+        setSweets(response.sweets)
+      }
+    } catch (error) {
+      console.error('Failed to fetch sweets:', error)
+      setError('Failed to load sweets from server')
+      // Keep using sample data as fallback
+    } finally {
+      setLoading(false)
+    }
+  }
   return (
     <motion.div
       variants={containerVariants}
@@ -164,7 +195,27 @@ function Home() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.8 }}
       >
-        <SweetsList sweets={SAMPLE_SWEETS} />
+        {error && (
+          <motion.div 
+            className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300 text-center"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {error} - Showing sample data
+          </motion.div>
+        )}
+        
+        {loading ? (
+          <motion.div 
+            className="text-center py-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="text-2xl text-white/60">Loading delicious sweets...</div>
+          </motion.div>
+        ) : (
+          <SweetsList sweets={sweets} />
+        )}
       </motion.main>
     </motion.div>
   )

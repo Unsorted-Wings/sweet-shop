@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null)
 
   // API base URL - adjust for your backend
-  const API_BASE_URL = 'http://localhost:3001/api'
+  const API_BASE_URL = 'https://sweet-shop-theta.vercel.app/api'
 
   // Configure axios defaults
   axios.defaults.baseURL = API_BASE_URL
@@ -44,11 +44,17 @@ export const AuthProvider = ({ children }) => {
         return
       }
 
-      const response = await axios.get('/auth/me')
-      setUser(response.data.user)
+      // Try to decode the token to get user info
+      // For now, we'll assume the token is valid if it exists
+      // In production, you'd want to verify with the backend
+      const userData = JSON.parse(localStorage.getItem('user') || 'null')
+      if (userData) {
+        setUser(userData)
+      }
     } catch (error) {
       console.error('Auth check failed:', error)
       localStorage.removeItem('token')
+      localStorage.removeItem('user')
       delete axios.defaults.headers.common['Authorization']
     } finally {
       setLoading(false)
@@ -64,12 +70,13 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data
 
       localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       setUser(user)
 
       return { success: true, user }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed'
+      const errorMessage = error.response?.data?.error || 'Login failed'
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
@@ -86,12 +93,13 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data
 
       localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       setUser(user)
 
       return { success: true, user }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed'
+      const errorMessage = error.response?.data?.error || 'Registration failed'
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
@@ -101,11 +109,13 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('/auth/logout')
+      // No backend logout endpoint needed for JWT
+      // Just clean up local storage and state
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
       localStorage.removeItem('token')
+      localStorage.removeItem('user')
       delete axios.defaults.headers.common['Authorization']
       setUser(null)
     }
