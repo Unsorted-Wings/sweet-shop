@@ -93,4 +93,62 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
+
+/**
+ * PUT /api/sweets/:id
+ * Update sweet details (name, price, category only - NOT quantity)
+ * Requires admin authentication
+ * Note: Use restock/purchase endpoints for quantity management
+ */
+router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, price, category, quantity } = req.body;
+    
+    // Reject quantity updates - should use dedicated endpoints
+    if (quantity !== undefined) {
+      return res.status(400).json({
+        error: 'Quantity cannot be updated via PUT. Use restock/purchase endpoints.'
+      });
+    }
+    
+    // Build update object (excluding quantity)
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (price !== undefined) updateData.price = price;
+    if (category !== undefined) updateData.category = category;
+    
+    // Update sweet with validation
+    const updatedSweet = await Sweet.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedSweet) {
+      return res.status(404).json({
+        error: 'Sweet not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Sweet updated successfully',
+      sweet: updatedSweet
+    });
+  } catch (error) {
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        error: `Validation failed: ${error.message}`
+      });
+    }
+    
+    console.error('Error updating sweet:', error);
+    res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
+});
+
 export default router;
