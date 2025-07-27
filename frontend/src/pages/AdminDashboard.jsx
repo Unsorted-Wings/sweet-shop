@@ -114,7 +114,7 @@ function AdminDashboard() {
     e.preventDefault();
     if (!selectedProduct || !restockQuantity) return;
     try {
-      const response = await sweetAPI.restock(selectedProduct._id, parseInt(restockQuantity));
+      const response = await sweetAPI.restock(selectedProduct.id, parseInt(restockQuantity));
       if (response) {
         // Refresh products and stats from backend
         await fetchDashboardData();
