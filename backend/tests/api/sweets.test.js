@@ -400,6 +400,219 @@ describe('Sweet API Endpoints', () => {
     });
   });
 
+  describe('GET /api/sweets/search', () => {
+    const mockSearchResults = [
+      {
+        _id: 'sweet1',
+        name: 'Chocolate Cake',
+        price: 25.99,
+        category: 'cake',
+        quantity: 10,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        _id: 'sweet2',
+        name: 'Chocolate Cookies',
+        price: 15.50,
+        category: 'cookie',
+        quantity: 20,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    it('should search sweets by name for authenticated user', async () => {
+      const mockSortedQuery = {
+        sort: jest.fn().mockResolvedValue(mockSearchResults.filter(s => s.name.includes('Chocolate')))
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
+
+      const response = await request(app)
+        .get('/api/sweets/search?name=Chocolate')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(2);
+      expect(response.body.sweets[0].name).toContain('Chocolate');
+      expect(mockSweetFind).toHaveBeenCalledWith({
+        name: { $regex: 'Chocolate', $options: 'i' }
+      });
+    });
+
+    it('should search sweets by category for authenticated user', async () => {
+      const mockSortedQuery = {
+        sort: jest.fn().mockResolvedValue([mockSearchResults[0]])
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
+
+      const response = await request(app)
+        .get('/api/sweets/search?category=cake')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(1);
+      expect(response.body.sweets[0].category).toBe('cake');
+      expect(mockSweetFind).toHaveBeenCalledWith({ category: 'cake' });
+    });
+
+    it('should search sweets by price range for authenticated user', async () => {
+      const mockSortedQuery = {
+        sort: jest.fn().mockResolvedValue([mockSearchResults[1]])
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
+
+      const response = await request(app)
+        .get('/api/sweets/search?minPrice=10&maxPrice=20')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(1);
+      expect(response.body.sweets[0].price).toBe(15.50);
+      expect(mockSweetFind).toHaveBeenCalledWith({
+        price: { $gte: 10, $lte: 20 }
+      });
+    });
+
+    it('should search with combined filters (name and category)', async () => {
+      const mockSortedQuery = {
+        sort: jest.fn().mockResolvedValue([mockSearchResults[1]])
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
+
+      const response = await request(app)
+        .get('/api/sweets/search?name=Chocolate&category=cookie')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(mockSweetFind).toHaveBeenCalledWith({
+        name: { $regex: 'Chocolate', $options: 'i' },
+        category: 'cookie'
+      });
+    });
+
+    it('should search with all filters combined', async () => {
+      const mockSortedQuery = {
+        sort: jest.fn().mockResolvedValue([mockSearchResults[1]])
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
+
+      const response = await request(app)
+        .get('/api/sweets/search?name=Chocolate&category=cookie&minPrice=10&maxPrice=20')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(mockSweetFind).toHaveBeenCalledWith({
+        name: { $regex: 'Chocolate', $options: 'i' },
+        category: 'cookie',
+        price: { $gte: 10, $lte: 20 }
+      });
+    });
+
+    it('should return empty results when no sweets match search criteria', async () => {
+      const mockSortedQuery = {
+        sort: jest.fn().mockResolvedValue([])
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
+
+      const response = await request(app)
+        .get('/api/sweets/search?name=NonexistentSweet')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(0);
+      expect(response.body.message).toBe('No sweets found matching search criteria');
+    });
+
+    it('should reject request without authentication', async () => {
+      const response = await request(app)
+        .get('/api/sweets/search?name=Chocolate')
+        .expect(401);
+
+      expect(response.body.error).toBe('Access token is required');
+      expect(mockSweetFind).not.toHaveBeenCalled();
+    });
+
+    it('should reject request with invalid token', async () => {
+      const response = await request(app)
+        .get('/api/sweets/search?name=Chocolate')
+        .set('Authorization', 'Bearer invalid-token')
+        .expect(401);
+
+      expect(response.body.error).toBe('Invalid or expired token');
+      expect(mockSweetFind).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 for invalid price parameters', async () => {
+      const response = await request(app)
+        .get('/api/sweets/search?minPrice=invalid')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(400);
+
+      expect(response.body.error).toBe('Invalid price parameters. minPrice and maxPrice must be valid numbers.');
+      expect(mockSweetFind).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when minPrice is greater than maxPrice', async () => {
+      const response = await request(app)
+        .get('/api/sweets/search?minPrice=30&maxPrice=20')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(400);
+
+      expect(response.body.error).toBe('minPrice cannot be greater than maxPrice');
+      expect(mockSweetFind).not.toHaveBeenCalled();
+    });
+
+    it('should handle database errors gracefully', async () => {
+      mockSweetFind.mockImplementation(() => {
+        throw new Error('Database connection failed');
+      });
+
+      const response = await request(app)
+        .get('/api/sweets/search?name=Chocolate')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(500);
+
+      expect(response.body.error).toBe('Internal server error');
+    });
+
+    it('should support sorting search results', async () => {
+      const mockSortedQuery = {
+        sort: jest.fn().mockResolvedValue(mockSearchResults)
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
+
+      const response = await request(app)
+        .get('/api/sweets/search?name=Chocolate&sort=price')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(mockSortedQuery.sort).toHaveBeenCalledWith({ price: 1 });
+    });
+
+    it('should work for admin users', async () => {
+      const mockSortedQuery = {
+        sort: jest.fn().mockResolvedValue(mockSearchResults)
+      };
+      mockSweetFind.mockReturnValue(mockSortedQuery);
+
+      const response = await request(app)
+        .get('/api/sweets/search?name=Chocolate')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.sweets).toHaveLength(2);
+    });
+  });
+
   describe('PUT /api/sweets/:id', () => {
     const validUpdateData = {
       name: 'Updated Chocolate Cake',
