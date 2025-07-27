@@ -218,7 +218,7 @@ function Login() {
               <div className="bg-white/5 rounded-lg p-3">
                 <p className="text-blue-400 font-semibold">Customer</p>
                 <p className="text-gray-300">customer@example.com</p>
-                <p className="text-gray-300">user123</p>
+                <p className="text-gray-300">testPassword123</p>
               </div>
             </div>
           </div>

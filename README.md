@@ -57,8 +57,8 @@ root/
 3. Start the dev server: `npm start`
 
 ### Deployment
-- For static hosting (Vercel, Netlify, etc.), ensure all routes fallback to `index.html` for client-side routing.
-- See `vercel.json` or `_redirects` for configuration examples.
+- Deployed on Vercel, ensure all routes fallback to `index.html` for client-side routing.
+- See `vercel.json` for configuration examples.
 
 ## API Endpoints (Backend)
 
