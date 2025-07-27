@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Package, Trash2 } from 'lucide-react';
+import { Package, Trash2, Edit } from 'lucide-react';
 
-const ProductTable = ({ products, deletingId, openRestockModal, handleDeleteProduct }) => (
+const ProductTable = ({ products, deletingId, openRestockModal, openEditModal, handleDeleteProduct }) => (
   <div className="overflow-x-auto">
     <table className="w-full">
       <thead>
@@ -15,14 +15,16 @@ const ProductTable = ({ products, deletingId, openRestockModal, handleDeleteProd
         </tr>
       </thead>
       <tbody>
-        {products.map((product, index) => (
-          <motion.tr
-            key={product._id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 + index * 0.1 }}
-            className="border-b border-white/10 hover:bg-white/5 transition-colors"
-          >
+        {products.map((product, index) => {
+          const productId = product.id || product._id;
+          return (
+            <motion.tr
+              key={productId}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 + index * 0.1 }}
+              className="border-b border-white/10 hover:bg-white/5 transition-colors"
+            >
             <td className="p-4">
               <div className="text-white font-semibold">{product.name}</div>
             </td>
@@ -60,12 +62,21 @@ const ProductTable = ({ products, deletingId, openRestockModal, handleDeleteProd
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => handleDeleteProduct(product.id)}
-                  className={`p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors ${deletingId === product.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  title="Delete Product"
-                  disabled={deletingId === product.id}
+                  onClick={() => openEditModal(product)}
+                  className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                  title="Edit Product"
                 >
-                  {deletingId === product.id ? (
+                  <Edit size={16} />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleDeleteProduct(productId)}
+                  className={`p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors ${deletingId === productId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title="Delete Product"
+                  disabled={deletingId === productId}
+                >
+                  {deletingId === productId ? (
                     <span className="animate-spin inline-block"><Trash2 size={16} /></span>
                   ) : (
                     <Trash2 size={16} />
@@ -74,7 +85,8 @@ const ProductTable = ({ products, deletingId, openRestockModal, handleDeleteProd
               </div>
             </td>
           </motion.tr>
-        ))}
+          );
+        })}
       </tbody>
     </table>
   </div>

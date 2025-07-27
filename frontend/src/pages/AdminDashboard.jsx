@@ -7,6 +7,7 @@ import AddProductModal from '../components/AddProductModal';
 import RestockModal from '../components/RestockModal';
 import { useAuth } from '../contexts/AuthContext'
 import { sweetAPI } from '../services/api'
+import EditProductModal from '../components/EditProductModal';
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -24,6 +25,7 @@ function AdminDashboard() {
   const [deletingId, setDeletingId] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showRestockModal, setShowRestockModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -112,7 +114,7 @@ function AdminDashboard() {
     e.preventDefault();
     if (!selectedProduct || !restockQuantity) return;
     try {
-      const response = await sweetAPI.restock(selectedProduct.id, parseInt(restockQuantity));
+      const response = await sweetAPI.restock(selectedProduct._id, parseInt(restockQuantity));
       if (response) {
         // Refresh products and stats from backend
         await fetchDashboardData();
@@ -127,10 +129,41 @@ function AdminDashboard() {
       alert('Failed to restock product. Please try again.');
     }
   }
+
+  const handleEditProduct = async (e) => {
+    e.preventDefault();
+    if (!selectedProduct) return;
+    try {
+      const updatedData = {
+        name: selectedProduct.name,
+        price: parseFloat(selectedProduct.price),
+        category: selectedProduct.category,
+        quantity: selectedProduct.quantity !== undefined && selectedProduct.quantity !== '' ? parseInt(selectedProduct.quantity) : undefined
+      };
+      const id = selectedProduct.id || selectedProduct._id;
+      const response = await sweetAPI.update(id, updatedData);
+      if (response) {
+        // Refresh products and stats from backend
+        await fetchDashboardData();
+        // Reset form and close modal
+        setSelectedProduct(null);
+        setShowEditModal(false);
+        alert('Product updated successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to update product:', error);
+      alert('Failed to update product. Please try again.');
+    }
+  }
   
   const openRestockModal = (product) => {
     setSelectedProduct(product)
     setShowRestockModal(true)
+  }
+
+  const openEditModal = (product) => {
+    setSelectedProduct(product)
+    setShowEditModal(true)
   }
 
   if (!isAdmin) {
@@ -221,6 +254,7 @@ function AdminDashboard() {
                 deletingId={deletingId}
                 openRestockModal={openRestockModal}
                 handleDeleteProduct={handleDeleteProduct}
+                openEditModal={openEditModal}
               />
             </motion.div>
           </>
@@ -251,6 +285,17 @@ function AdminDashboard() {
           setRestockQuantity('');
         }}
         onSubmit={handleRestock}
+      />
+
+      <EditProductModal
+        show={showEditModal}
+        product={selectedProduct}
+        setProduct={setSelectedProduct}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedProduct(null);
+        }}
+        onSubmit={handleEditProduct}
       />
     </motion.div>
   )
