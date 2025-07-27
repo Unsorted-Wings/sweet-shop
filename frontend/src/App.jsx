@@ -14,6 +14,11 @@ function App() {
       <main>
         <section data-testid="sweets-list">
           <h2>Available Sweets</h2>
+          <div data-testid="sweet-card-1" className="sweet-card">
+            <h3>Chocolate Cake</h3>
+            <p className="price">₹500</p>
+            <button type="button">Purchase</button>
+          </div>
         </section>
       </main>
     </div>
