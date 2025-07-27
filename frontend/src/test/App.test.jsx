@@ -14,4 +14,10 @@ describe('App Component', () => {
     
     expect(screen.getByRole('link', { name: /home/i })).toBeInTheDocument()
   })
+
+  it('should render Browse Sweets navigation link', () => {
+    render(<App />)
+    
+    expect(screen.getByRole('link', { name: /browse sweets/i })).toBeInTheDocument()
+  })
 })
