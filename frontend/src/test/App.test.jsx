@@ -32,4 +32,13 @@ describe('App Component', () => {
     
     expect(screen.getByTestId('sweets-list')).toBeInTheDocument()
   })
+
+  it('should render a sweet card with name, price and purchase button', () => {
+    render(<App />)
+    
+    expect(screen.getByTestId('sweet-card-1')).toBeInTheDocument()
+    expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
+    expect(screen.getByText('₹500')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /purchase/i })).toBeInTheDocument()
+  })
 })
