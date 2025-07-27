@@ -20,4 +20,10 @@ describe('App Component', () => {
     
     expect(screen.getByRole('link', { name: /browse sweets/i })).toBeInTheDocument()
   })
+
+  it('should render Search navigation link', () => {
+    render(<App />)
+    
+    expect(screen.getByRole('link', { name: /search/i })).toBeInTheDocument()
+  })
 })
