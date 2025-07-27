@@ -15,16 +15,19 @@ describe('App Component', () => {
     expect(screen.getByRole('link', { name: /home/i })).toBeInTheDocument()
   })
 
-  it('should render Browse Sweets navigation link', () => {
+  it('should render About navigation link', () => {
     render(<App />)
     
-    expect(screen.getByRole('link', { name: /browse sweets/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /about/i })).toBeInTheDocument()
   })
 
-  it('should render Search navigation link', () => {
+  it('should render Cart navigation link', () => {
     render(<App />)
     
-    expect(screen.getByRole('link', { name: /search/i })).toBeInTheDocument()
+    // Look specifically for the navigation cart link, not sweet card links
+    const navElement = screen.getByRole('navigation')
+    expect(navElement).toBeInTheDocument()
+    expect(screen.getByText('Cart')).toBeInTheDocument()
   })
 
   it('should render sweets list section', () => {

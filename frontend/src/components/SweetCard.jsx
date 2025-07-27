@@ -1,5 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 
 const cardVariants = {
   hidden: { 
@@ -96,15 +97,16 @@ function SweetCard({ sweet, testId, buttonTestId, index }) {
   }
   
   return (
-    <motion.div 
-      data-testid={testId}
-      className="relative group"
-      variants={cardVariants}
-      initial="hidden"
-      animate="visible"
-      whileHover="hover"
-      custom={index}
-    >
+    <Link to={`/sweet/${sweet.id}`} className="block">
+      <motion.div 
+        data-testid={testId}
+        className="relative group cursor-pointer"
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        whileHover="hover"
+        custom={index}
+      >
       {/* Glow effect */}
       <motion.div 
         className={`absolute -inset-1 bg-gradient-to-r ${getGradientColors(index)} rounded-3xl blur-xl opacity-0 group-hover:opacity-100`}
@@ -237,6 +239,7 @@ function SweetCard({ sweet, testId, buttonTestId, index }) {
         </div>
       </div>
     </motion.div>
+    </Link>
   )
 }
 

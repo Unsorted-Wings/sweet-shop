@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import SweetCard from '../components/SweetCard'
 
 describe('SweetCard Component', () => {
@@ -19,12 +20,14 @@ describe('SweetCard Component', () => {
 
   it('should render sweet information correctly', () => {
     render(
-      <SweetCard 
-        sweet={mockSweet}
-        testId="test-card"
-        buttonTestId="test-button"
-        index={0}
-      />
+      <MemoryRouter>
+        <SweetCard 
+          sweet={mockSweet}
+          testId="test-card"
+          buttonTestId="test-button"
+          index={0}
+        />
+      </MemoryRouter>
     )
     
     expect(screen.getByTestId('test-card')).toBeInTheDocument()
@@ -36,12 +39,14 @@ describe('SweetCard Component', () => {
 
   it('should show "Out of Stock" when quantity is zero', () => {
     render(
-      <SweetCard 
-        sweet={mockOutOfStockSweet}
-        testId="out-of-stock-card"
-        buttonTestId="out-of-stock-button"
-        index={0}
-      />
+      <MemoryRouter>
+        <SweetCard 
+          sweet={mockOutOfStockSweet}
+          testId="out-of-stock-card"
+          buttonTestId="out-of-stock-button"
+          index={0}
+        />
+      </MemoryRouter>
     )
     
     expect(screen.getByText('Out of Stock Sweet')).toBeInTheDocument()
@@ -51,12 +56,14 @@ describe('SweetCard Component', () => {
 
   it('should disable purchase button when out of stock', () => {
     render(
-      <SweetCard 
-        sweet={mockOutOfStockSweet}
-        testId="out-of-stock-card"
-        buttonTestId="out-of-stock-button"
-        index={0}
-      />
+      <MemoryRouter>
+        <SweetCard 
+          sweet={mockOutOfStockSweet}
+          testId="out-of-stock-card"
+          buttonTestId="out-of-stock-button"
+          index={0}
+        />
+      </MemoryRouter>
     )
     
     const button = screen.getByTestId('out-of-stock-button')
@@ -66,12 +73,14 @@ describe('SweetCard Component', () => {
 
   it('should enable purchase button when in stock', () => {
     render(
-      <SweetCard 
-        sweet={mockSweet}
-        testId="in-stock-card"
-        buttonTestId="in-stock-button"
-        index={0}
-      />
+      <MemoryRouter>
+        <SweetCard 
+          sweet={mockSweet}
+          testId="in-stock-card"
+          buttonTestId="in-stock-button"
+          index={0}
+        />
+      </MemoryRouter>
     )
     
     const button = screen.getByTestId('in-stock-button')
