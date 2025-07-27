@@ -70,7 +70,7 @@ Successfully implemented a complete sweet shop inventory management system with 
 - **Test Suites**: 8 passed
 - **Total Tests**: 167 passed
 - **Coverage**: Complete endpoint and functionality coverage
-- **Status**: All tests passing ✅
+- **Status**: 48 test cases fail 
 
 ## Key Features Implemented
 
