@@ -212,12 +212,12 @@ function Login() {
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="bg-white/5 rounded-lg p-3">
                 <p className="text-pink-400 font-semibold">Admin</p>
-                <p className="text-gray-300">admin@sweetshop.com</p>
-                <p className="text-gray-300">admin123</p>
+                <p className="text-gray-300">admin@example.com</p>
+                <p className="text-gray-300">testPassword123</p>
               </div>
               <div className="bg-white/5 rounded-lg p-3">
                 <p className="text-blue-400 font-semibold">Customer</p>
-                <p className="text-gray-300">user@sweetshop.com</p>
+                <p className="text-gray-300">customer@example.com</p>
                 <p className="text-gray-300">user123</p>
               </div>
             </div>
