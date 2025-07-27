@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import SweetsList from '../components/SweetsList'
+import SweetSearchContainer from '../components/SweetSearchContainer';
 import { sweetAPI } from '../services/api'
 import { useAuth } from '../contexts/AuthContext'
 import { SAMPLE_SWEETS } from '../data/sweets'
@@ -15,7 +16,7 @@ const containerVariants = {
       staggerChildren: 0.1
     }
   }
-}
+};
 
 const heroVariants = {
   hidden: { y: -50, opacity: 0 },
@@ -35,6 +36,10 @@ function Home() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const { isAuthenticated } = useAuth()
+  const sweetCategories = [
+    'chocolate', 'candy', 'gummy', 'hard-candy', 'lollipop', 'toffee', 'fudge',
+    'marshmallow', 'cake', 'cookie', 'pastry'
+  ];
 
   useEffect(() => {
     // Always try to fetch sweets since API now requires authentication
@@ -195,11 +200,12 @@ function Home() {
       {/* Sweets Collection */}
       <motion.main 
         id="sweets-collection"
-        className="px-4 md:px-8 pb-16"
+        className="px-4 md:px-8 pb-16 mt-20"
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.8 }}
       >
+        <SweetSearchContainer setSweets={setSweets} categories={sweetCategories} />
         {error && (
           <motion.div 
             className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300 text-center"
@@ -209,7 +215,6 @@ function Home() {
             {error} - Showing sample data
           </motion.div>
         )}
-        
         {loading ? (
           <motion.div 
             className="text-center py-16"
