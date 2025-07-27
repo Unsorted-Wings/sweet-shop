@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 const RestockModal = ({ show, selectedProduct, restockQuantity, setRestockQuantity, onClose, onSubmit }) => {
+  const [loading, setLoading] = useState(false);
   if (!show || !selectedProduct) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await onSubmit(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <motion.div
@@ -15,7 +27,7 @@ const RestockModal = ({ show, selectedProduct, restockQuantity, setRestockQuanti
           <p className="text-gray-300">Product: <span className="text-white font-semibold">{selectedProduct.name}</span></p>
           <p className="text-gray-300">Current Stock: <span className="text-white font-semibold">{selectedProduct.stock}</span></p>
         </div>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-300 text-sm font-semibold mb-2">Add Quantity</label>
             <input
@@ -40,11 +52,12 @@ const RestockModal = ({ show, selectedProduct, restockQuantity, setRestockQuanti
             </motion.button>
             <motion.button
               type="submit"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl"
+              whileHover={!loading ? { scale: 1.05 } : {}}
+              whileTap={!loading ? { scale: 0.95 } : {}}
+              className={`flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
+              disabled={loading}
             >
-              Restock
+              {loading ? 'Restocking...' : 'Restock'}
             </motion.button>
           </div>
         </form>
