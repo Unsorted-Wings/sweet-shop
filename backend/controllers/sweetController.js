@@ -60,55 +60,53 @@ export class SweetController {
    */
   static async searchSweets(searchParams, sorting = {}) {
     const { name, category, minPrice, maxPrice } = searchParams;
-    
+
     // Validate price parameters
-    if ((minPrice && isNaN(parseFloat(minPrice))) || (maxPrice && isNaN(parseFloat(maxPrice)))) {
+    if ((minPrice !== undefined && minPrice !== null && minPrice !== '' && isNaN(parseFloat(minPrice))) ||
+        (maxPrice !== undefined && maxPrice !== null && maxPrice !== '' && isNaN(parseFloat(maxPrice)))) {
       throw new Error('Invalid price parameters. minPrice and maxPrice must be valid numbers.');
     }
-    
-    const minPriceNum = minPrice ? parseFloat(minPrice) : null;
-    const maxPriceNum = maxPrice ? parseFloat(maxPrice) : null;
-    
+
+    const minPriceNum = minPrice !== undefined && minPrice !== null && minPrice !== '' ? parseFloat(minPrice) : undefined;
+    const maxPriceNum = maxPrice !== undefined && maxPrice !== null && maxPrice !== '' ? parseFloat(maxPrice) : undefined;
+
     // Validate price range
-    if (minPriceNum && maxPriceNum && minPriceNum > maxPriceNum) {
+    if (minPriceNum !== undefined && maxPriceNum !== undefined && minPriceNum > maxPriceNum) {
       throw new Error('minPrice cannot be greater than maxPrice');
     }
-    
+
     // Build search filter object
     const filter = {};
-    
-    // Add name search (case-insensitive regex)
     if (name) {
       filter.name = { $regex: name, $options: 'i' };
     }
-    
-    // Add category filter
     if (category) {
       filter.category = category;
     }
-    
-    // Add price range filter
-    if (minPriceNum || maxPriceNum) {
-      filter.price = {};
-      if (minPriceNum) filter.price.$gte = minPriceNum;
-      if (maxPriceNum) filter.price.$lte = maxPriceNum;
+    if (minPriceNum !== undefined || maxPriceNum !== undefined) {
+      const priceFilter = {};
+      if (minPriceNum !== undefined) priceFilter.$gte = minPriceNum;
+      if (maxPriceNum !== undefined) priceFilter.$lte = maxPriceNum;
+      if (Object.keys(priceFilter).length > 0) {
+        filter.price = priceFilter;
+      }
     }
-    
+
     // Find sweets with search filters
     let query = Sweet.find(filter);
-    
+
     // Add sorting if specified
     if (sorting.sort) {
       const sortOrder = sorting.order === 'desc' ? -1 : 1;
       query = query.sort({ [sorting.sort]: sortOrder });
     }
-    
+
     const sweets = await query;
-    
-    const message = sweets.length === 0 
+
+    const message = sweets.length === 0
       ? 'No sweets found matching search criteria'
       : `Found ${sweets.length} sweet${sweets.length === 1 ? '' : 's'} matching search criteria`;
-    
+
     return {
       success: true,
       message,
@@ -128,28 +126,28 @@ export class SweetController {
     if (updateData.quantity !== undefined) {
       throw new Error('Quantity cannot be updated via PUT. Use restock/purchase endpoints.');
     }
-    
+
     // Build update object (excluding quantity)
     const allowedFields = ['name', 'price', 'category'];
     const filteredUpdateData = {};
-    
+
     allowedFields.forEach(field => {
-      if (updateData[field] !== undefined) {
+      if (Object.prototype.hasOwnProperty.call(updateData, field)) {
         filteredUpdateData[field] = updateData[field];
       }
     });
-    
+
     // Update sweet with validation
     const updatedSweet = await Sweet.findByIdAndUpdate(
       id,
       filteredUpdateData,
       { new: true, runValidators: true }
     );
-    
+
     if (!updatedSweet) {
       return null;
     }
-    
+
     return {
       success: true,
       message: 'Sweet updated successfully',

@@ -50,6 +50,16 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
+    // Handle validation errors for PUT
+    if (req.method === 'PUT') {
+      if (error.message && error.message.includes('Quantity cannot be updated via PUT')) {
+        return res.status(400).json({ error: error.message });
+      }
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({ error: `Validation failed: ${error.message}` });
+      }
+    }
+
     console.error('Error in sweet detail API:', error);
     res.status(500).json({
       error: 'Internal server error',

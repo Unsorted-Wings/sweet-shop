@@ -54,18 +54,22 @@ export default async function handler(req, res) {
 async function handleGetSweets(req, res, user) {
   try {
     console.log('📦 Fetching sweets for user:', user.email);
-    
+
     const { category } = req.query;
     const { sort, order = 'asc' } = req.query;
-    
+
     const filters = {};
     if (category) {
       filters.category = category;
     }
-    
+
     const sorting = { sort, order };
-    
+
     const result = await SweetController.getAllSweets(filters, sorting);
+    // Ensure correct message for no sweets found
+    if (result.sweets && result.sweets.length === 0) {
+      result.message = 'No sweets found';
+    }
     res.status(200).json(result);
   } catch (error) {
     console.error('Error fetching sweets:', error);
@@ -80,7 +84,7 @@ async function handleCreateSweet(req, res, user) {
   try {
     // Check if user is admin
     if (user.role !== 'admin') {
-      return res.status(403).json({ error: 'Access denied. Admin role required' });
+      return res.status(403).json({ error: 'Access denied. admin role required' });
     }
     
     const result = await SweetController.createSweet(req.body);

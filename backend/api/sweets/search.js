@@ -52,23 +52,29 @@ export default async function handler(req, res) {
 async function handleSearchSweets(req, res, user) {
   try {
     console.log('🔍 Searching sweets for user:', user.email);
-    
+
     const { name, category, minPrice, maxPrice, sort, order = 'asc' } = req.query;
-    
+
     const searchParams = { name, category, minPrice, maxPrice };
     const sorting = { sort, order };
-    
-    const result = await SweetController.searchSweets(searchParams, sorting);
-    res.status(200).json(result);
-  } catch (error) {
-    // Handle validation errors
-    if (error.message.includes('Invalid price parameters') || 
-        error.message.includes('minPrice cannot be greater than maxPrice')) {
-      return res.status(400).json({
-        error: error.message
-      });
+
+    let result;
+    try {
+      result = await SweetController.searchSweets(searchParams, sorting);
+    } catch (error) {
+      if (error.message.includes('Invalid price parameters') ||
+          error.message.includes('minPrice cannot be greater than maxPrice')) {
+        return res.status(400).json({ error: error.message });
+      }
+      throw error;
     }
 
+    // Ensure correct message for no results
+    if (result.sweets && result.sweets.length === 0) {
+      result.message = 'No sweets found matching search criteria';
+    }
+    res.status(200).json(result);
+  } catch (error) {
     console.error('Error searching sweets:', error);
     res.status(500).json({
       error: 'Internal server error'
