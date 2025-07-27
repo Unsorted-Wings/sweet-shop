@@ -37,10 +37,9 @@ function Home() {
   const { isAuthenticated } = useAuth()
 
   useEffect(() => {
-    // Only fetch from backend if user is authenticated
-    if (isAuthenticated) {
-      fetchSweets()
-    }
+    // Always try to fetch sweets since API now requires authentication
+    // The API will handle authentication requirements
+    fetchSweets()
   }, [isAuthenticated])
 
   const fetchSweets = async () => {
@@ -53,7 +52,13 @@ function Home() {
       }
     } catch (error) {
       console.error('Failed to fetch sweets:', error)
-      setError('Failed to load sweets from server')
+      
+      // Check if it's an authentication error
+      if (error.response?.status === 401) {
+        setError('Please log in to view sweets')
+      } else {
+        setError('Failed to load sweets from server')
+      }
       // Keep using sample data as fallback
     } finally {
       setLoading(false)

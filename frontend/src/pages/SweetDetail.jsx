@@ -2,6 +2,8 @@ import { motion } from 'framer-motion'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Star, ShoppingCart } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import { sweetAPI } from '../services/api'
 
 const pageVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -29,13 +31,31 @@ const imageVariants = {
 function SweetDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [sweet, setSweet] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [quantity, setQuantity] = useState(1)
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
+    fetchSweetDetail()
+  }, [id])
+
+  const fetchSweetDetail = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Try to fetch from API if authenticated
+      if (isAuthenticated) {
+        const response = await sweetAPI.getById(id)
+        if (response && response.sweet) {
+          setSweet(response.sweet)
+          return
+        }
+      }
+      
+      // Fallback to mock data for demo purposes
       const mockSweets = [
         {
           id: 1,
@@ -101,9 +121,14 @@ function SweetDetail() {
       
       const foundSweet = mockSweets.find(s => s.id === parseInt(id))
       setSweet(foundSweet)
+      
+    } catch (error) {
+      console.error('Failed to fetch sweet details:', error)
+      setError('Failed to load sweet details')
+    } finally {
       setLoading(false)
-    }, 800)
-  }, [id])
+    }
+  }
 
   const handleAddToCart = () => {
     // Add to cart logic here

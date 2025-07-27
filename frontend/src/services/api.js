@@ -46,6 +46,12 @@ export const sweetAPI = {
     return response.data
   },
 
+  // Get sweet by ID
+  getById: async (id) => {
+    const response = await api.get(`/sweets/${id}`)
+    return response.data
+  },
+
   // Search sweets
   search: async (params) => {
     const response = await api.get('/sweets/search', { params })
