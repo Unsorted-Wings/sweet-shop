@@ -7,6 +7,7 @@ function App() {
       <nav>
         <a href="/">Home</a>
         <a href="/sweets">Browse Sweets</a>
+        <a href="/search">Search</a>
       </nav>
       <h1>Sweet Shop</h1>
     </div>
