@@ -873,7 +873,7 @@ describe('Sweet API Endpoints', () => {
         .delete(`/api/sweets/${sweetId}`)
         .expect(401);
 
-      expect(response.body.error).toBe('Authentication token required');
+      expect(response.body.error).toBe('Access token is required');
       expect(mockSweetFindByIdAndDelete).not.toHaveBeenCalled();
     });
 
@@ -883,7 +883,7 @@ describe('Sweet API Endpoints', () => {
         .set('Authorization', `Bearer ${customerToken}`)
         .expect(403);
 
-      expect(response.body.error).toBe('Admin access required');
+      expect(response.body.error).toBe('Access denied. admin role required');
       expect(mockSweetFindByIdAndDelete).not.toHaveBeenCalled();
     });
 
@@ -893,7 +893,7 @@ describe('Sweet API Endpoints', () => {
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
 
-      expect(response.body.error).toBe('Invalid authentication token');
+      expect(response.body.error).toBe('Invalid or expired token');
       expect(mockSweetFindByIdAndDelete).not.toHaveBeenCalled();
     });
 
