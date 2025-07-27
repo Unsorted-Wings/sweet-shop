@@ -4,6 +4,9 @@ import './App.css'
 function App() {
   return (
     <div className="App">
+      <nav>
+        <a href="/">Home</a>
+      </nav>
       <h1>Sweet Shop</h1>
     </div>
   )
