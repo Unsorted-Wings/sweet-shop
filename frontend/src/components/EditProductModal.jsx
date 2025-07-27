@@ -40,21 +40,21 @@ const EditProductModal = ({ show, product, setProduct, onClose, onSubmit }) => {
             <select
               value={product.category}
               onChange={e => setProduct({ ...product, category: e.target.value })}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-pink-500"
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-gray-400 focus:outline-none focus:border-pink-500"
               required
             >
-              <option value="">Select category</option>
-              <option value="chocolate">Chocolate</option>
-              <option value="candy">Candy</option>
-              <option value="gummy">Gummy</option>
-              <option value="hard-candy">Hard Candy</option>
-              <option value="lollipop">Lollipop</option>
-              <option value="toffee">Toffee</option>
-              <option value="fudge">Fudge</option>
-              <option value="marshmallow">Marshmallow</option>
-              <option value="cake">Cake</option>
-              <option value="cookie">Cookie</option>
-              <option value="pastry">Pastry</option>
+              <option value="" className='text-black'>Select category</option>
+              <option value="chocolate" className='text-black' >Chocolate</option>
+              <option value="candy" className='text-black' >Candy</option>
+              <option value="gummy" className='text-black' >Gummy</option>
+              <option value="hard-candy" className='text-black' >Hard Candy</option>
+              <option value="lollipop" className='text-black' >Lollipop</option>
+              <option value="toffee" className='text-black' >Toffee</option>
+              <option value="fudge" className='text-black' >Fudge</option>
+              <option value="marshmallow" className='text-black' >Marshmallow</option>
+              <option value="cake" className='text-black' >Cake</option>
+              <option value="cookie" className='text-black' >Cookie</option>
+              <option value="pastry" className='text-black' >Pastry</option>
             </select>
           </div>
           <div className="flex gap-3 pt-4">

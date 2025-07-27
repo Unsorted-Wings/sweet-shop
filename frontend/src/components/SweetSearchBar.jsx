@@ -41,11 +41,11 @@ const SweetSearchBar = ({ onSearch, categories }) => {
         <select
           value={category}
           onChange={e => setCategory(e.target.value)}
-          className="px-4 py-2 rounded-xl border border-pink-200 bg-white/20 text-white focus:outline-none focus:border-pink-500 focus:bg-white/30 transition"
+          className="px-4 py-2 rounded-xl border border-pink-200 bg-white/20 text-gray-300 focus:outline-none focus:border-pink-500 focus:bg-white/30 transition"
         >
-          <option value="">All</option>
+          <option value="" className='text-black'>All</option>
           {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+            <option key={cat} value={cat} className='text-black'>{cat}</option>
           ))}
         </select>
       </div>
