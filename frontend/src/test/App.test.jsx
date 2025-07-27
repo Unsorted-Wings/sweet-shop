@@ -38,7 +38,7 @@ describe('App Component', () => {
     
     expect(screen.getByTestId('sweet-card-1')).toBeInTheDocument()
     expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
-    expect(screen.getByText('₹500')).toBeInTheDocument()
+    expect(screen.getByText('$12.99')).toBeInTheDocument()
     expect(screen.getByTestId('purchase-btn-1')).toBeInTheDocument()
   })
 
