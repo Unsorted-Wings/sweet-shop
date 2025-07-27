@@ -16,8 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // API base URL - adjust for your backend
-  const API_BASE_URL = 'https://sweet-shop-theta.vercel.app/api'
+  // API base URL from environment variables
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
   // Configure axios defaults
   axios.defaults.baseURL = API_BASE_URL
