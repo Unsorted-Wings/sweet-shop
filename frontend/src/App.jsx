@@ -10,6 +10,12 @@ function App() {
         <a href="/search">Search</a>
       </nav>
       <h1>Sweet Shop</h1>
+      
+      <main>
+        <section data-testid="sweets-list">
+          <h2>Available Sweets</h2>
+        </section>
+      </main>
     </div>
   )
 }
