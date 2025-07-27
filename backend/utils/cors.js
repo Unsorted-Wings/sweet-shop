@@ -1,19 +1,23 @@
 export function handleCors(req, res) {
-  // Get allowed origins from environment or use defaults
-  const allowedOrigins = process.env.CORS_ORIGIN 
-    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-    : [
-        'http://localhost:5173',
-        'http://localhost:3000', 
-        'http://127.0.0.1:5173',
-        'https://sweet-shop-management-frontend.vercel.app'
-      ];
+  // Hardcode working origins - more reliable than environment variables
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000', 
+    'http://127.0.0.1:5173',
+    'https://sweet-shop-management-frontend.vercel.app'
+  ];
 
   const origin = req.headers.origin;
   
-  // Set CORS headers
-  if (!origin || allowedOrigins.includes(origin)) {
+  console.log('🔍 Request origin:', origin);
+  console.log('🔍 Allowed origins:', allowedOrigins);
+  
+  // Set CORS headers - be more permissive for development
+  if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    console.log('✅ CORS allowed for origin:', origin);
+  } else {
+    console.log('❌ CORS blocked for origin:', origin);
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

@@ -1,41 +1,60 @@
-import express from 'express';
 import { SweetController } from '../controllers/sweetController.js';
-import { authenticateToken, requireAdmin } from '../middleware/auth.js';
+import { handleCors } from '../utils/cors.js';
+import { connectToDatabase } from '../utils/db.js';
+import jwt from 'jsonwebtoken';
 
-const router = express.Router();
+export default async function handler(req, res) {
+  // Handle CORS
+  if (handleCors(req, res)) {
+    return; // Was a preflight request, already handled
+  }
 
-/**
- * POST /api/sweets
- * Create a new sweet
- * Requires admin authentication
- */
-router.post('/', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const result = await SweetController.createSweet(req.body);
-    res.status(201).json(result);
-  } catch (error) {
-    // Handle validation errors
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        error: `Validation failed: ${error.message}`
-      });
+    // Connect to database
+    await connectToDatabase();
+    
+    // Check authentication for all requests
+    const authHeader = req.headers['authorization'];
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Access token is required' });
     }
-
-    // Handle other errors
-    console.error('Error creating sweet:', error);
+    
+    const token = authHeader.substring(7);
+    
+    if (!token || !token.trim()) {
+      return res.status(401).json({ error: 'Invalid token format' });
+    }
+    
+    // Verify the JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Route to appropriate handler based on method
+    if (req.method === 'GET') {
+      return await handleGetSweets(req, res, decoded);
+    } else if (req.method === 'POST') {
+      return await handleCreateSweet(req, res, decoded);
+    } else {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    
+    console.error('Error in sweets API:', error);
     res.status(500).json({
       error: 'Internal server error'
     });
   }
-});
+}
 
-/**
- * GET /api/sweets
- * Get all sweets with optional filtering and sorting
- * Requires authentication (both customer and admin can view)
- */
-router.get('/', authenticateToken, async (req, res) => {
+// GET /api/sweets - Get all sweets
+async function handleGetSweets(req, res, user) {
   try {
+    console.log('📦 Fetching sweets for user:', user.email);
+    
     const { category } = req.query;
     const { sort, order = 'asc' } = req.query;
     
@@ -54,179 +73,29 @@ router.get('/', authenticateToken, async (req, res) => {
       error: 'Internal server error'
     });
   }
-});
+}
 
-
-/**
- * GET /api/sweets/search
- * Search for sweets by name, category, or price range
- * Requires authentication (both customer and admin can search)
- */
-router.get('/search', authenticateToken, async (req, res) => {
+// POST /api/sweets - Create a new sweet (admin only)
+async function handleCreateSweet(req, res, user) {
   try {
-    const { name, category, minPrice, maxPrice, sort, order = 'asc' } = req.query;
+    // Check if user is admin
+    if (user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Admin role required' });
+    }
     
-    const searchParams = { name, category, minPrice, maxPrice };
-    const sorting = { sort, order };
-    
-    const result = await SweetController.searchSweets(searchParams, sorting);
-    res.status(200).json(result);
+    const result = await SweetController.createSweet(req.body);
+    res.status(201).json(result);
   } catch (error) {
-    // Handle validation errors
-    if (error.message.includes('Invalid price parameters') || 
-        error.message.includes('minPrice cannot be greater than maxPrice')) {
-      return res.status(400).json({
-        error: error.message
-      });
-    }
-
-    console.error('Error searching sweets:', error);
-    res.status(500).json({
-      error: 'Internal server error'
-    });
-  }
-});
-
-/**
- * PUT /api/sweets/:id
- * Update sweet details (name, price, category only - NOT quantity)
- * Requires admin authentication
- * Note: Use restock/purchase endpoints for quantity management
- */
-router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const result = await SweetController.updateSweet(id, req.body);
-    
-    if (!result) {
-      return res.status(404).json({
-        error: 'Sweet not found'
-      });
-    }
-    
-    res.status(200).json(result);
-  } catch (error) {
-    // Handle quantity update rejection
-    if (error.message.includes('Quantity cannot be updated via PUT')) {
-      return res.status(400).json({
-        error: error.message
-      });
-    }
-    
     // Handle validation errors
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         error: `Validation failed: ${error.message}`
       });
     }
-    
-    console.error('Error updating sweet:', error);
+
+    console.error('Error creating sweet:', error);
     res.status(500).json({
       error: 'Internal server error'
     });
   }
-});
-
-/**
- * DELETE /api/sweets/:id
- * Delete a sweet from the inventory
- * Requires admin authentication
- */
-router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const result = await SweetController.deleteSweet(id);
-    
-    if (!result) {
-      return res.status(404).json({
-        error: 'Sweet not found'
-      });
-    }
-    
-    res.status(200).json(result);
-  } catch (error) {
-    console.error('Error deleting sweet:', error);
-    res.status(500).json({
-      error: 'Internal server error'
-    });
-  }
-});
-
-/**
- * POST /api/sweets/:id/purchase
- * Purchase a sweet, decreasing its quantity
- * Requires authentication (both customer and admin can purchase)
- */
-router.post('/:id/purchase', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { quantity = 1 } = req.body || {};
-    
-    const result = await SweetController.purchaseSweet(id, quantity);
-    
-    if (!result) {
-      return res.status(404).json({
-        error: 'Sweet not found'
-      });
-    }
-    
-    res.status(200).json(result);
-  } catch (error) {
-    // Handle validation errors and insufficient stock
-    if (error.message.includes('quantity must be a positive integer') ||
-        error.message.includes('Insufficient stock')) {
-      return res.status(400).json({
-        error: error.message
-      });
-    }
-    
-    console.error('Error purchasing sweet:', error);
-    res.status(500).json({
-      error: 'Internal server error'
-    });
-  }
-});
-
-/**
- * POST /api/sweets/:id/restock
- * Restock a sweet, increasing its quantity
- * Requires admin authentication
- */
-router.post('/:id/restock', authenticateToken, requireAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { quantity } = req.body || {};
-    
-    if (quantity === undefined || quantity === null) {
-      return res.status(400).json({
-        error: 'Quantity is required for restocking'
-      });
-    }
-    
-    const result = await SweetController.restockSweet(id, quantity);
-    
-    if (!result) {
-      return res.status(404).json({
-        error: 'Sweet not found'
-      });
-    }
-    
-    res.status(200).json(result);
-  } catch (error) {
-    // Handle validation errors
-    if (error.message.includes('quantity must be a positive integer')) {
-      return res.status(400).json({
-        error: error.message
-      });
-    }
-    
-    console.error('Error restocking sweet:', error);
-    res.status(500).json({
-      error: 'Internal server error'
-    });
-  }
-});
-
-export default router;
+}
