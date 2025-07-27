@@ -17,7 +17,12 @@ function App() {
           <div data-testid="sweet-card-1" className="sweet-card">
             <h3>Chocolate Cake</h3>
             <p className="price">₹500</p>
-            <button type="button">Purchase</button>
+            <button type="button" data-testid="purchase-btn-1">Purchase</button>
+          </div>
+          <div data-testid="sweet-card-2" className="sweet-card">
+            <h3>Vanilla Cupcake</h3>
+            <p className="price">Out of Stock</p>
+            <button type="button" data-testid="purchase-btn-2" disabled>Purchase</button>
           </div>
         </section>
       </main>

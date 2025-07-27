@@ -39,7 +39,7 @@ describe('App Component', () => {
     expect(screen.getByTestId('sweet-card-1')).toBeInTheDocument()
     expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
     expect(screen.getByText('₹500')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /purchase/i })).toBeInTheDocument()
+    expect(screen.getByTestId('purchase-btn-1')).toBeInTheDocument()
   })
 
   it('should disable purchase button when sweet quantity is zero', () => {
