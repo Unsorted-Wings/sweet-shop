@@ -25,7 +25,10 @@ export function createApp() {
         'http://localhost:5173',
         'http://localhost:3000', 
         'http://127.0.0.1:5173',
+        'https://sweet-shop-frontend.vercel.app'
       ];
+
+  console.log('🔧 CORS allowed origins:', allowedOrigins);
 
   const corsOptions = {
     origin: (origin, callback) => {
@@ -33,9 +36,10 @@ export function createApp() {
       if (!origin) return callback(null, true);
       
       if (allowedOrigins.indexOf(origin) !== -1) {
+        console.log(`✅ CORS allowed origin: ${origin}`);
         callback(null, true);
       } else {
-        console.log(`CORS blocked origin: ${origin}`);
+        console.log(`❌ CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
