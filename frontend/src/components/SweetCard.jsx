@@ -79,38 +79,40 @@ function SweetCard({ sweet, testId, buttonTestId, index, onPurchaseSuccess }) {
   const isLowStock = sweet.quantity > 0 && sweet.quantity <= 5
 
   const handlePurchase = async (e) => {
-    e.preventDefault() // Prevent Link navigation
-    e.stopPropagation()
+    e.preventDefault(); // Prevent Link navigation
+    e.stopPropagation();
 
     if (!isAuthenticated) {
-      alert('Please log in to purchase sweets!')
-      return
+      alert('Please log in to purchase sweets!');
+      return;
     }
 
-    if (isOutOfStock) return
+    if (isOutOfStock) return;
 
     try {
-      setPurchasing(true)
-      await sweetAPI.purchase(sweet._id || sweet.id, 1)
-      
+      setPurchasing(true);
+      // Always use sweet.id for purchase
+      await sweetAPI.purchase(sweet.id, 1);
+
       // Show success message
-      alert(`Successfully purchased ${sweet.name}! 🎉`)
-      
+      alert(`Successfully purchased ${sweet.name}! 🎉`);
+
       // Notify parent component to refresh data
       if (onPurchaseSuccess) {
-        onPurchaseSuccess()
+        onPurchaseSuccess();
       }
     } catch (error) {
-      console.error('Purchase failed:', error)
+      // Log more details for debugging
+      console.error('Purchase failed:', error, error?.response?.data);
       if (error.response?.status === 401) {
-        alert('Please log in to purchase sweets!')
+        alert('Please log in to purchase sweets!');
       } else if (error.response?.status === 400) {
-        alert(error.response?.data?.error || 'Insufficient stock!')
+        alert(error.response?.data?.error || 'Insufficient stock!');
       } else {
-        alert('Purchase failed. Please try again.')
+        alert('Purchase failed. Please try again.');
       }
     } finally {
-      setPurchasing(false)
+      setPurchasing(false);
     }
   }
   

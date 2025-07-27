@@ -1,4 +1,4 @@
-import { SweetController } from '../../../../controllers/sweetController.js';
+import { SweetController } from '../../../controllers/sweetController.js';
 import { handleCors } from '../../../../utils/cors.js';
 import { connectToDatabase } from '../../../../utils/db.js';
 import jwt from 'jsonwebtoken';
