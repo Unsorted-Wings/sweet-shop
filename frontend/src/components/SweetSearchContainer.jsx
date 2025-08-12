@@ -16,12 +16,12 @@ const SweetSearchContainer = ({ setSweets, categories }) => {
     if (cleanedParams.category) cleanedParams.category = cleanedParams.category.trim();
 
     // Prevent searching if all fields are empty
-    const hasQuery = Object.values(cleanedParams).some(v => v && v !== '');
-    if (!hasQuery) {
-      setSweets([]);
-      setSearchError(null);
-      return;
-    }
+    // const hasQuery = Object.values(cleanedParams).some(v => v && v !== '');
+    // if (!hasQuery) {
+    //   setSweets([]);
+    //   setSearchError(null);
+    //   return;
+    // }
 
     setSearchLoading(true);
     setSearchError(null);
