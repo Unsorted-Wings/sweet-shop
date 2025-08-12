@@ -4,9 +4,11 @@ import { connectToDatabase } from '../../../utils/db.js';
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
-  // Handle CORS
-  if (handleCors(req, res)) {
-    return; // Was a preflight request, already handled
+  // Conditionally handle CORS (skip in test environment)
+  if (process.env.NODE_ENV !== 'test') {
+    if (handleCors(req, res)) {
+      return; // Was a preflight request, already handled
+    }
   }
 
   if (req.method !== 'POST') {

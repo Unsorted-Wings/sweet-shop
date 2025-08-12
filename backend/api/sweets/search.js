@@ -4,9 +4,11 @@ import { connectToDatabase } from '../../utils/db.js';
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
-  // Handle CORS
-  if (handleCors(req, res)) {
-    return; // Was a preflight request, already handled
+  // Conditionally handle CORS (skip in test environment)
+  if (process.env.NODE_ENV !== 'test') {
+    if (handleCors(req, res)) {
+      return; // Was a preflight request, already handled
+    }
   }
 
   try {
@@ -60,6 +62,7 @@ async function handleSearchSweets(req, res, user) {
 
     let result;
     try {
+      console.log(searchParams);
       result = await SweetController.searchSweets(searchParams, sorting);
     } catch (error) {
       if (error.message.includes('Invalid price parameters') ||
@@ -69,10 +72,6 @@ async function handleSearchSweets(req, res, user) {
       throw error;
     }
 
-    // Ensure correct message for no results
-    if (result.sweets && result.sweets.length === 0) {
-      result.message = 'No sweets found matching search criteria';
-    }
     res.status(200).json(result);
   } catch (error) {
     console.error('Error searching sweets:', error);

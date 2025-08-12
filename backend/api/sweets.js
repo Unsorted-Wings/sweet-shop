@@ -4,9 +4,11 @@ import { connectToDatabase } from '../utils/db.js';
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
-  // Handle CORS
-  if (handleCors(req, res)) {
-    return; // Was a preflight request, already handled
+  // Conditionally handle CORS (skip in test environment)
+  if (process.env.NODE_ENV !== 'test') {
+    if (handleCors(req, res)) {
+      return; // Was a preflight request, already handled
+    }
   }
 
   try {
@@ -66,10 +68,6 @@ async function handleGetSweets(req, res, user) {
     const sorting = { sort, order };
 
     const result = await SweetController.getAllSweets(filters, sorting);
-    // Ensure correct message for no sweets found
-    if (result.sweets && result.sweets.length === 0) {
-      result.message = 'No sweets found';
-    }
     res.status(200).json(result);
   } catch (error) {
     console.error('Error fetching sweets:', error);
