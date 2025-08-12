@@ -1,4 +1,11 @@
 export function handleCors(req, res) {
+  // Check if res has the expected methods
+  if (!res || typeof res.setHeader !== 'function') {
+    console.error('❌ Invalid response object passed to handleCors');
+    console.error('Response object:', typeof res, res);
+    return false;
+  }
+
   // Hardcode working origins - more reliable than environment variables
   const allowedOrigins = [
     'http://localhost:5173',
